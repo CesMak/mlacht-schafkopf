@@ -1,29 +1,37 @@
-class deck(object):
-    def __init__(self, nu_cards, colors=['B', 'G', 'R', 'Y'], value_conversion={}, seed=None):
+import random
+from gym_schafkopf.envs.card import Card
+class Deck(object):
+    def __init__(self, suits = ["E", "G", "H", "S"], ranks = ["7", "8", "9", "X", "U", "O", "K", "A"], seed=None):
         self.cards    = []
-        self.nu_cards = nu_cards
-        self.colors   = colors
-        self.value_conversion= value_conversion
+        self.nu_cards = len(suits)*len(ranks)
+        self.suits    = suits
+        self.ranks    = ranks
         if seed is not None:
             random.seed(seed)
         self.build()
 
     # Display all cards in the deck
-    def show(self):
+    def show(self, oneline=True):
+        res = ""
         for card in self.cards:
-            print(card.show())
+            if oneline:
+                res +=card.show()+", "
+            else:
+                print(card.show())
+        if oneline:
+            print(res)
+        return res
 
-    # Green Yellow Blue Red
     def build(self):
         self.cards = []
         idx        = 0
-        for color in self.colors:
-            for val in range(1, self.nu_cards+1):# choose different deck size here! max is 16
-                self.cards.append(card(color, val, idx, value_conversion = self.value_conversion))
+        for suit in self.suits:
+            for rank in  self.ranks:
+                self.cards.append(Card(suit, rank, idx))
                 idx +=1
 
     # Shuffle the deck
-    def shuffle(self, num=1):
+    def shuffle(self):
         random.shuffle(self.cards)
 
     # Return the top card

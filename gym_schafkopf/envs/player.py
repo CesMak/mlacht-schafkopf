@@ -1,24 +1,25 @@
-class player(object):
-    def __init__(self, name, type, colors=['B', 'G', 'R', 'Y']):
-        # how many different colors has the game
-        # schafkopf, doppelkopf, witches, uno = 4
-        self.name         = name
-        self.hand         = []
-        self.offhand      = [] # contains won cards of each round (for 4 players 4 cards!) = tricks
-        self.take_hand    = [] # cards in first phase cards to take! used in witches, schafkopf hochzeit
-        self.colorFree    = [0.0]*len(colors) # must be double for pytorch learning! 1.0 means other know that your are free of this color B G R Y
-        self.trumpFree    = 0.0
-        self.type         = type # HUMAN, RL=Automatic Bot, TODO change
-        self.colors       = colors
+from gym_schafkopf.envs.helper  import sortCards, getTrumps, getSuits, getCardOrder
+class Player(object):
+    def __init__(self, name, type):
+        self.name         = name        # players name
+        self.type         = type        # type e.g. RANDOM, HUMAN, NN=Neuronal Network, MCTS=MONTE CARLO TREE SEARCH
+        self.declaration  = ""          # weg
+        self.points       = 0           # 0...120 depending on the tricks he made
+        self.money        = 0           # depending on the gametype and points money is calculated
+        self.hand         = []          # cards one player has on its hand after dealing
+        self.offhand      = []          # contains won cards of each round (for 4 players 4 cards!) = tricks
+        self.suitFree     = [0.0, 0.0, 0.0, 0.0, 0.0]# trump free, color free <- used as gameState in the NN
+        # members for sorting cards:
+        self.handSorted   = False
 
     def sayHello(self):
-        print ("Hi! My name is {}".format(self.name))
+        print ("Hi! My name is {}.".format(self.name))
         return self
 
     # Draw n number of cards from a deck
     # Returns true if n cards are drawn, false if less then that
-    def draw(self, deck, num=1):
-        for _ in range(num):
+    def draw(self, deck, numCards=1):
+        for _ in range(numCards):
             card = deck.deal()
             if card:
                 card.player = self.name
@@ -29,41 +30,90 @@ class player(object):
 
     # Display all the cards in the players hand
     def showHand(self):
-        print ("{}'s hand: {}".format(self.name, self.getHandCardsSorted()))
+        print ("{}'s hand: {} type: {}".format(self.name, self.getHandCardsSorted(), self.type))
         return self
 
-    def discard(self):
-        # returns most upper card and removes it from the hand!
-        return self.hand.pop()
+    def showResult(self):
+        print ("{}'s hand: {} offhand: {} points: {} --> {}$".format(self.name, self.getHandCardsSorted(), str(self.offhand), self.points, self.money))
 
-    def getHandCardsSorted(self):
-        # this is used for showing the hand card nicely when playing
-        return sorted(self.hand, key = lambda x: ( x.color,  x.value))
+    def update(self, points, cardToDiscard, trick):
+        self.points += points
+        self.offhand.append(trick)
 
-    def appendCards(self, stich):
-        # add cards to the offhand.
-        self.offhand.append(stich)
+    def getHandCardsSorted(self, gameType="RAMSCH"):
+        self.hand = sortCards(self.hand, gameType=gameType)
+        self.handSorted   = True
 
     def setColorFree(self, color):
-        for j, i in enumerate(self.colors):
+        for j, i in enumerate(["E","G","H","S"]):
             if color == i:
-                self.colorFree[j] = 1.0
+                self.suitFree[j+1] = 1.0
 
     def setTrumpFree(self):
-        self.trumpFree = 1.0
+        self.suitFree[0] = 1.0
 
-    def playRandomCard(self, incolor, options):
-        if len(options) == 0:
-            print("Error has no options left!", options, self.hand)
-            return None
-        rand_card = random.randrange(len(options))
-        card_idx = 0
-        card_idx  = options[rand_card][0]
-        return self.hand.pop(card_idx)
+    def getDeclarationOptions(self):
+        # TODO check allowed declarations
+        # TODO check hand cars EA, GA, SA if RUF is allowed or not etc.
+        return ["weg"]
 
-    def hasSpecificCardOnHand(self, idx):
-        # return True if the hand has this card!
-        for i in self.hand:
-            if i.idx == idx:
-                return True
-        return False
+    def getPlayingOptions(self, initialCard, gameType="RAMSCH"):
+        # Ramsch: Herz=Trumpf
+        if not self.handSorted:
+            self.getHandCardsSorted(gameType)
+        if initialCard == None:
+            # you are the first player
+            return self.hand
+        else:
+            trumpIdx, _ = getCardOrder(gameType)
+            if initialCard.idx in trumpIdx: # first card is a trump
+                trumps = getTrumps(self.hand, gameType)
+                if len(trumps)>0:
+                    return trumps
+                else: # if a trump is played but you do not have a trump!
+                    self.setTrumpFree()
+                    return self.hand
+            else:
+                suits = getSuits(self.hand, initialCard.suit, gameType)
+                if len(suits)>0:
+                    return suits
+                else: # if a trump is played but you do not have a trump!
+                    self.setColorFree(initialCard.suit)
+                    return self.hand
+
+    def getOptions(self, initialCard, phase=0, gameType="RAMSCH"):
+        # get all possible Options for the player
+        if phase == 0: # declaration
+            return self.getDeclarationOptions()
+        else:               # playing phase
+            return self.getPlayingOptions(initialCard, gameType=gameType)
+
+import random
+class PlayerRANDOM(Player):
+    def __init__(self, name, seed=None):
+        super().__init__(name, type="RANDOM")
+        if seed is not None: random.seed(seed)
+
+    def getAction(self, initialCard, phase, gameType):
+        opts=super().getOptions(initialCard, phase=phase, gameType=gameType)
+        action =  opts[random.randrange(len(opts))]
+        if phase == 1:
+            self.hand.pop(self.hand.index(action)) # disard selected option!
+        return action
+class PlayerNN(Player):
+    def __init__(self, name):
+        super().__init__(name, type="NN")
+    def getAction(state:list):
+        print("TODO")
+
+class PlayerMCTS(Player):
+    def __init__(self, name):
+        super().__init__(name, type="MCTS")
+    def getAction(possibleCards:list):
+        print("TODO")
+
+class PlayerHUMAN(Player):
+    def __init__(self, name):
+        super().__init__(name, type="HUMAN")
+    def getAction(possibleCards:list):
+        print("TODO")

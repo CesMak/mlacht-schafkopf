@@ -1,16 +1,8 @@
-class card(object):
+class Card(object):
     def __init__(self, suit: str, rank: str, idx: int):
-        if self.validate(suit, rank):
-            self.suit = suit # E G H S
-            self.rank = rank # 7 8 9 10 U O K A
-            self.idx  = idx # 0...32  # each card has a unique index.
-            return True 
-        return False 
-
-    def validate(self, suit: str, rank: str):
-        if suit in ["E", "G", "H", "S"] and rank in ["7", "8", "9", "10", "U", "O", "K", "A"]:
-            return True 
-        return False
+        self.suit = suit # E G H S
+        self.rank = rank # 7 8 9 10 U O K A
+        self.idx  = idx
 
     # Implementing build in methods so that you can print a card object
     def __unicode__(self):
@@ -19,11 +11,18 @@ class card(object):
         return self.show()
     def __repr__(self):
         return self.show()
+    def show_simple(self):
+        return str("{}{}_{}".format(self.suit, self.rank, self.idx))
+    def getName(self):
+        return str(self.suit)+str(self.rank)
     def show(self):
-        return str("u\"{}{}\"".format(self.suit, self.rank, self.idx))
-    def show_colored(self):
-        # TODO 
-        # BRed='\033[1;31m'         # Red
-        # BGreen='\033[1;32m'       # Green
-        # BYellow='\033[1;33m'      # Yellow
-        return "\033[91mThis is red text\033[0m"
+        tmp = self.suit+""+self.rank
+        if self.suit == "E":
+            tmp = "\033[1;33m"+tmp
+        elif self.suit == "G":
+            tmp = "\033[1;32m"+tmp
+        elif self.suit == "H":
+            tmp = "\033[1;31m"+tmp
+        else:
+            tmp =  "\033[0;36m"+tmp# Schell is blue here!
+        return tmp+"\033[0m"
