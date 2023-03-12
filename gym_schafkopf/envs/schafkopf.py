@@ -84,6 +84,7 @@ class Schafkopf():
             return action.idx
 
     def getNextPlayer(self):
+        # remove this function is contained in helper
         if self.active_player == 3:
             return 0
         else:

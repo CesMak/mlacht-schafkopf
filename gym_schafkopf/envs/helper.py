@@ -1,3 +1,5 @@
+from gym_schafkopf.envs.card import Card
+import random
 def getCardOrder(gameType):
     trumpIdx  = [5, 13, 21, 29, 4, 12, 20, 28] +  [23, 19, 22, 18, 17, 16] 
     otherIdx  = [7, 3, 6, 2, 1, 0] + [15, 11, 14, 10, 9, 8] + [31, 27, 30, 26, 25, 24]
@@ -84,7 +86,6 @@ def findCards(wantedCards, givenCards, max_equality=100):
     return False
 
 def createCardByName(name="EO"):
-    from gym_schafkopf.envs.card import Card
     suit = name[0]
     rank = name[1]
     sortedCards = ["E7","E8","E9","E1","EU","EO","EK","EA","G7","G8","G9","G1","GU","GO","GK","GA","H7","H8","H9","H1","HU","HO","HK","HA","S7","S8","S9","S1","SU","SO","SK","SA"]
@@ -95,3 +96,40 @@ def createCardByName(name="EO"):
 def removeFormatting(res: str):
     res = res.replace("\033[1;33m","").replace("\033[1;32m","").replace("\033[1;31m","")
     return res.replace("\033[0;36m","").replace("\033[0m","").replace(" ","")
+
+###
+### Functions for MCTS
+###
+def getNextPlayer(cp):
+    if cp == 3:
+        return 0
+    else:
+        return cp+1
+
+def subSample(playerCards, table, played, activeP, doEval=False):
+    # playerCards consists of all hand cards -> doEval can be used
+    # if playerCards consists only of hand card of activePlayer doEval cannot be used!
+    hand         = playerCards[activeP]
+    table        = [x for x in table if x is not None]
+    allcards     = [x for x in range(32)]
+    unknownCards = convert2Idx(hand+table+played)
+    leftCards    = [i for i in allcards if i not in unknownCards]
+    random.shuffle(leftCards)
+    sampledCards   = [[], [], [], []]
+    sampledCards[activeP] = convert2Idx(hand)
+    tmp = activeP
+    for _ in range(len(leftCards)):
+        p = getNextPlayer(tmp)
+        if p==activeP:
+            p = getNextPlayer(p)
+        sampledCards[p].append(leftCards.pop())
+        tmp = p
+
+    matching = [0, 0, 0, 0]
+    if doEval: # do evaluation -> check similarity!
+        for i in range(len(matching)):
+            if not len(sampledCards[i])==len(playerCards[i]):
+                print("ERROR!!!")
+            intersec = len(set(sampledCards[i]).intersection(convert2Idx(playerCards[i])))
+            matching[i] = round(intersec/len(playerCards[i]),2)
+    return sampledCards, matching

@@ -106,6 +106,7 @@ class PlayerNN(Player):
     def getAction(state:list):
         print("TODO")
 
+#from mcts.mct import MonteCarloTree
 class PlayerMCTS(Player):
     def __init__(self, name):
         super().__init__(name, type="MCTS")
