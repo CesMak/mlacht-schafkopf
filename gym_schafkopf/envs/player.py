@@ -22,7 +22,6 @@ class Player(object):
         for _ in range(numCards):
             card = deck.deal()
             if card:
-                card.player = self.name
                 self.hand.append(card)
             else:
                 return False
@@ -43,6 +42,7 @@ class Player(object):
     def getHandCardsSorted(self, gameType="RAMSCH"):
         self.hand = sortCards(self.hand, gameType=gameType)
         self.handSorted   = True
+        return self.hand
 
     def setColorFree(self, color):
         for j, i in enumerate(["E","G","H","S"]):

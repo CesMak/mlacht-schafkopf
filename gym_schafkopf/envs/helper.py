@@ -1,4 +1,7 @@
 from gym_schafkopf.envs.card import Card
+
+SORTEDCARDS = ["E7","E8","E9","E1","EU","EO","EK","EA","G7","G8","G9","G1","GU","GO","GK","GA","H7","H8","H9","H1","HU","HO","HK","HA","S7","S8","S9","S1","SU","SO","SK","SA"]
+
 import random
 def getCardOrder(gameType):
     trumpIdx  = [5, 13, 21, 29, 4, 12, 20, 28] +  [23, 19, 22, 18, 17, 16] 
@@ -88,9 +91,19 @@ def findCards(wantedCards, givenCards, max_equality=100):
 def createCardByName(name="EO"):
     suit = name[0]
     rank = name[1]
-    sortedCards = ["E7","E8","E9","E1","EU","EO","EK","EA","G7","G8","G9","G1","GU","GO","GK","GA","H7","H8","H9","H1","HU","HO","HK","HA","S7","S8","S9","S1","SU","SO","SK","SA"]
-    idx=sortedCards.index(name)
+    idx=SORTEDCARDS.index(name)
     return Card(suit,rank,idx)
+
+def createCardByIdx(idx=0):
+    return Card(SORTEDCARDS[idx][0], SORTEDCARDS[idx][1],idx)
+
+def createDeclByIdx(idx=32):
+    return "weg"
+
+def createActionByIdx(idx=0):
+    if idx>31:
+        return createDeclByIdx(idx=idx)
+    return createCardByIdx(idx=idx)
 
 # remove printing formatting
 def removeFormatting(res: str):

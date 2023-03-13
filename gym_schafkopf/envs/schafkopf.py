@@ -1,7 +1,7 @@
 import numpy as np
 from gym_schafkopf.envs.player  import PlayerMCTS, PlayerNN, PlayerRANDOM, PlayerHUMAN
 from gym_schafkopf.envs.deck    import Deck
-from gym_schafkopf.envs.helper  import sortCards, getPoints, getMoney
+from gym_schafkopf.envs.helper  import sortCards, getPoints, getMoney, convert2Idx, createCardByIdx, createActionByIdx
 
 class Schafkopf():
     def __init__(self, options_dict):
@@ -27,6 +27,10 @@ class Schafkopf():
         self.table          = [None, None, None, None]
         self.gameType       = "RAMSCH"
 
+        # for save and storing a game:
+        self.initialHandsIdx = []
+        self.movesIdx        = []
+
     def createDeck(self):
         d = Deck(seed=self.seed)
         d.shuffle()
@@ -51,6 +55,21 @@ class Schafkopf():
         for i in range(len(self.player_names)):
             p = self.createPlayer(self.player_names[i], self.player_types[i])
             p.draw(d, numCards=8)
+            self.players.append(p)
+            if self.print_:
+                p.showHand()
+
+    def replayGame(self,  moves=[], handCards=[]):
+        self.setup_customGame(handCards)
+        for i in moves:
+            self.step(customIdx=i)
+
+    def setup_customGame(self, cardsIdx=[]):
+        # used for replaying a game!
+        for i in range(len(self.player_names)):
+            p = self.createPlayer(self.player_names[i], self.player_types[i])
+            playerCardsIdx = cardsIdx[i]
+            p.hand = [createCardByIdx(i) for i in playerCardsIdx]
             self.players.append(p)
             if self.print_:
                 p.showHand()
@@ -107,10 +126,22 @@ class Schafkopf():
         return money
 
     # a game step
-    def step(self, humanIdx=-1):
+    def step(self, humanIdx=-1, customIdx=-1):
+        # humanIdx not yet used / implemented TODO?!
+        # customIdx is a valid action cardIndex 0...32
+
+        if self.move==0: # used for replaying and storing a game!
+            for p in self.players:
+                self.initialHandsIdx.append(convert2Idx(p.hand))
+
         cp        = self.players[self.active_player]
-        action    = self.getPlayerAction(cp, humanIdx) # TODO FOR HUMANS
-        actionIdx = self.action2Idx(action)
+        if customIdx<0:
+            action    = self.getPlayerAction(cp, humanIdx) # TODO FOR HUMANS
+            actionIdx = self.action2Idx(action)
+        else:
+            actionIdx = customIdx
+            action    = createActionByIdx(actionIdx)
+
         # if actionIdx negative -> action is not possible!
         if actionIdx<0:
             print("invalid Action")
@@ -145,6 +176,7 @@ class Schafkopf():
                 if self.print_: print(str(self.current_round)+"-"+str(self.move)+": "+cp.name +" " +cp.type +" plays "+str(action))
                 self.active_player = self.getNextPlayer()
         self.move +=1
+        self.movesIdx.append(actionIdx)
         if self.move == 36:
             money = self.finischGame()
             self.nu_games_played+=1
