@@ -1,14 +1,20 @@
 # Code https://github.com/Taschee/schafkopf/blob/master/schafkopf/players/mc_node.py
 import numpy as np
-class MCNode:
+class Node:
     def __init__(self, game_state, parent=None, previous_action=None):
         self.children = []
         self.parent = parent
-        self.game_state = game_state
-        self.current_player = game_state["current_player_index"]
         self.previous_action = previous_action
         self.visits = 0
         self.cumulative_rewards = [0 for i in range(4)]
+
+        # the GameState:
+        self.gOptions   = game_state["options"]  # Schafkopf Options
+        self.gMoves   = game_state["moves"] 
+        self.gInitialHandsIdx = game_state["initialHandsIdx"]
+        self.gActive_Player = game_state["activePlayer"]
+        self.gGameOver       = game_state["gameOver"]
+        self.gActions        = game_state["actions"] # possible actions for current Player
 
     def add_child(self, child_node):
         self.children.append(child_node)
@@ -20,13 +26,13 @@ class MCNode:
             return False
 
     def is_terminal(self):
-        if len(self.game_state["tricks"]) == 8:
+        if self.gGameOver:
             return True
         else:
             return False
 
     def fully_expanded(self):
-        if len(self.children) == len(self.game_state["possible_actions"]):
+        if len(self.children) == len(self.gActions):
             return True
         else:
             return False

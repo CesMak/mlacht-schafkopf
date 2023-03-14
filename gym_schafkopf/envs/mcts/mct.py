@@ -1,18 +1,14 @@
 import random
-import gym
-import gym_schafkopf
-from node import Node
+from gym_schafkopf.envs.mcts.node    import Node
+from gym_schafkopf.envs.schafkopf    import Schafkopf
 from copy import deepcopy
-
-opts_RL    = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RL", "RL", "RL", "RL"], "nu_cards": 8, "active_player": 3, "seed": None, "colors": ['E', 'G', 'H', 'S'], "value_conversion": {1: "7", 2: "8", 3: "9", 4: "U", 5: "O", 6: "K", 7: "X", 8: "A"}}
-#opts_RAND  = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "RANDOM", "RANDOM", "RANDOM"], "nu_cards": 8, "active_player": 3, "seed": None, "colors": ['E', 'G', 'H', 'S'], "value_conversion": {1: "7", 2: "8", 3: "9", 4: "U", 5: "O", 6: "K", 7: "X", 8: "A"}}
 
 class MonteCarloTree:
   '''
   Inspired by https://github.com/Taschee/schafkopf/blob/master/schafkopf/players/uct_player.py
   '''
-  def __init__(self, game_state, player_hands, allowed_actions, ucb_const=1):
-    self.root = Node(None, None, game_state, player_hands, allowed_actions)
+  def __init__(self, game_state, ucb_const=1):
+    self.root = Node(game_state, parent=None, previous_action=None)
     self.ucb_const = ucb_const
     self.rewards = []
     self.gameOver = False
@@ -46,18 +42,23 @@ class MonteCarloTree:
     return current_node
 
   def expand(self, node):
-    not_visited_actions = deepcopy(node.allowed_actions)
+    not_visited_actions = deepcopy(node.gActions) # possible actions for current player
     for child in node.children:
       not_visited_actions.remove(child.previous_action)
 
     #TODO: check if this should be random or chosen by player policy
     chosen_action = random.choice(tuple(not_visited_actions))
 
-    schafkopf_env           = gym.make("Schafkopf-v1", options_test=opts_RL)
-    schafkopf_env.setGameState(deepcopy(node.game_state), deepcopy(node.player_hands))
-    _, self.rewards, self.gameOver, _ = schafkopf_env.stepTest(chosen_action) # state, rewards, terminal, info
+    s     =     Schafkopf(node.gOptions)
+    s.replayGame(moves=node.gMoves, handCards=node.gInitialHandsIdx)
+    s.step(customIdx=chosen_action)
+    
+    # schafkopf_env           = gym.make("Schafkopf-v1", options_test=opts_RL)
+    # schafkopf_env.setGameState(deepcopy(node.game_state), deepcopy(node.player_hands))
+    # _, self.rewards, self.gameOver, _ = schafkopf_env.stepTest(chosen_action) # state, rewards, terminal, info
+    #new_node = Node(parent=node, game_state=deepcopy(schafkopf_env.getGameState()), previous_action=chosen_action, player_hands=deepcopy(schafkopf_env.getCards()), allowed_actions=schafkopf_env.test_game.getOptionsList())
 
-    new_node = Node(parent=node, game_state=deepcopy(schafkopf_env.getGameState()), previous_action=chosen_action, player_hands=deepcopy(schafkopf_env.getCards()), allowed_actions=schafkopf_env.test_game.getOptionsList())
+    new_node = Node(deepcopy(s.getGameState()), parent=node, previous_action=chosen_action)
     node.add_child(child_node=new_node)
     return new_node
 
@@ -65,13 +66,17 @@ class MonteCarloTree:
     if self.gameOver: # special case if is already game over do not expand anymore / create new node!
       return self.rewards["final_rewards"]
 
-    schafkopf_env           = gym.make("Schafkopf-v1", options_test=opts_RL)
-    gameOver= deepcopy(selected_node.game_state)["gameOver"]
-    schafkopf_env.setGameState(deepcopy(selected_node.game_state), deepcopy(selected_node.player_hands))
-    
-    while not gameOver:
-      rewards, round_finished, gameOver = schafkopf_env.test_game.playUntilEnd()
-    return rewards["final_rewards"]
+    # schafkopf_env           = gym.make("Schafkopf-v1", options_test=opts_RL)
+    # gameOver= deepcopy(selected_node.game_state)["gameOver"]
+    # schafkopf_env.setGameState(deepcopy(selected_node.game_state), deepcopy(selected_node.player_hands))
+
+    s     =     Schafkopf(selected_node.gOptions)
+    s.replayGame(moves=deepcopy(selected_node.gMoves), handCards=deepcopy(selected_node.gInitialHandsIdx)) # TODO do I need deepcopy here?!
+    gO    = s.gameOver
+
+    while not gO:
+      gO = s.step()
+    return s.money
 
   def backup_rewards(self, leaf_node, rewards):
     current_node = leaf_node
