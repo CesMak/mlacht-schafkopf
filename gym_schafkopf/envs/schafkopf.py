@@ -1,10 +1,13 @@
 import numpy as np
 from gym_schafkopf.envs.player  import PlayerMCTS, PlayerNN, PlayerRANDOM, PlayerHUMAN
 from gym_schafkopf.envs.deck    import Deck
-from gym_schafkopf.envs.helper  import sortCards, getPoints, getMoney, convert2Idx, createCardByIdx, createActionByIdx
+from gym_schafkopf.envs.helper  import sortCards, getPoints, getMoney, convertCards2Idx, createCardByIdx, createActionByIdx, convert2Idx
 
 class Schafkopf():
     def __init__(self, options_dict):
+        self.resetGame(options_dict)
+
+    def resetGame(self, options_dict):
         # Independent stuff:
         self.options           = options_dict
         self.player_types      = options_dict["type"] # set here the player type
@@ -59,6 +62,9 @@ class Schafkopf():
             self.players.append(p)
             if self.print_:
                 p.showHand()
+            # used for replaying and storing a game!
+            if self.move==0: self.initialHandsIdx.append(convertCards2Idx(p.hand))
+
 
     def evaluateTable(self):
         sortedCards = sortCards(self.table, gameType=self.gameType)
@@ -100,6 +106,7 @@ class Schafkopf():
             for i in self.table:
                 if i is not None:
                     return i
+        return self.initialCard # otherwise initialCard would be None!
 
     def finischGame(self):
         points = [p.points for p in self.players]
@@ -117,11 +124,6 @@ class Schafkopf():
     def step(self, humanIdx=-1, customIdx=-1):
         # humanIdx not yet used / implemented TODO?!
         # customIdx is a valid action cardIndex 0...32
-
-        if self.move==0: # used for replaying and storing a game!
-            for p in self.players:
-                self.initialHandsIdx.append(convert2Idx(p.hand))
-
         cp        = self.players[self.active_player]
         if customIdx<0:
             action    = self.getPlayerAction(cp, humanIdx) # TODO FOR HUMANS
@@ -134,7 +136,7 @@ class Schafkopf():
         if actionIdx<0:
             print("invalid Action")
             # TODO
-        self.initialCard = self.getInitialCard()
+
         if self.phase == 0:
             cp.declaration = actionIdx # TODO <- remove this?!
             self.active_player = self.getNextPlayer()
@@ -149,6 +151,7 @@ class Schafkopf():
                 if self.print_: print(str(self.current_round)+"-"+str(self.move)+": "+cp.name +" " +cp.type +" declares "+str(action))
         else:
             self.table[self.active_player] = action
+            self.initialCard = self.getInitialCard()
             if (self.move+1)%4==0:
                 # round ends
                 hC, winnerIdx, points = self.evaluateTable()
@@ -167,25 +170,27 @@ class Schafkopf():
         self.movesIdx.append(actionIdx)
         if self.move == 36:
             points, money = self.finischGame()
-            return True # game is finished!
-        return False # game not finished!
+            return True, points, money # game is finished!
+        return False, None, None # game not finished!
 
  ### Functions used for MCTS Player
     def getGameState(self):
-        actions = self.players[self.active_player].getOptions(self.initialCard, phase = self.phase, gameType=self.gameType)
+        actions = convert2Idx(self.players[self.active_player].getOptions(self.initialCard, phase = self.phase, gameType=self.gameType))
         gameState ={"options": self.options, "moves": self.movesIdx, "initialHandsIdx": self.initialHandsIdx, "activePlayer": self.active_player,
                     "gameOver": self.gameOver, "actions": actions}
         
         return gameState
 
     def replayGame(self,  moves=[], handCards=[]):
+        # each repalyGame starts with an empty game:
+        if self.print_: print("REPLAY GAME NOW: ", moves)
+        self.resetGame(self.options)
         self.setup_customGame(handCards)
         for i in moves:
             self.step(customIdx=i)
 
     def setup_customGame(self, cardsIdx=[]):
         # used for replaying a game!
-        print(cardsIdx)
         for i in range(len(self.player_names)):
             p = self.createPlayer(self.player_names[i], self.player_types[i])
             playerCardsIdx = cardsIdx[i]
@@ -193,3 +198,5 @@ class Schafkopf():
             self.players.append(p)
             if self.print_:
                 p.showHand()
+            # used for replaying and storing a game!
+            if self.move==0: self.initialHandsIdx.append(convertCards2Idx(p.hand))

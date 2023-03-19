@@ -15,8 +15,7 @@ class MonteCarloTree:
     self.treeList = []
     self.treeFilled = False
 
-
-  def uct_search(self, num_playouts, print_=False):
+  def uct_search(self, num_playouts=5, print_=False):
     for i in range(num_playouts):
       selected_node = self.selection()
       rewards = self.simulation(selected_node)
@@ -58,7 +57,9 @@ class MonteCarloTree:
     # _, self.rewards, self.gameOver, _ = schafkopf_env.stepTest(chosen_action) # state, rewards, terminal, info
     #new_node = Node(parent=node, game_state=deepcopy(schafkopf_env.getGameState()), previous_action=chosen_action, player_hands=deepcopy(schafkopf_env.getCards()), allowed_actions=schafkopf_env.test_game.getOptionsList())
 
-    new_node = Node(deepcopy(s.getGameState()), parent=node, previous_action=chosen_action)
+    new_node = Node(s.getGameState(), parent=node, previous_action=chosen_action)
+    new_node.gInitialHandsIdx = node.gInitialHandsIdx
+
     node.add_child(child_node=new_node)
     return new_node
 
@@ -74,9 +75,10 @@ class MonteCarloTree:
     s.replayGame(moves=deepcopy(selected_node.gMoves), handCards=deepcopy(selected_node.gInitialHandsIdx)) # TODO do I need deepcopy here?!
     gO    = s.gameOver
 
+    money = None
     while not gO:
-      gO = s.step()
-    return s.money
+      gO, points, money = s.step()
+    return money
 
   def backup_rewards(self, leaf_node, rewards):
     current_node = leaf_node

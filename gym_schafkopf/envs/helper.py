@@ -1,6 +1,6 @@
 from gym_schafkopf.envs.card import Card
 
-SORTEDCARDS = ["E7","E8","E9","E1","EU","EO","EK","EA","G7","G8","G9","G1","GU","GO","GK","GA","H7","H8","H9","H1","HU","HO","HK","HA","S7","S8","S9","S1","SU","SO","SK","SA"]
+SORTEDCARDS = ["E7","E8","E9","EX","EU","EO","EK","EA","G7","G8","G9","GX","GU","GO","GK","GA","H7","H8","H9","HX","HU","HO","HK","HA","S7","S8","S9","SX","SU","SO","SK","SA"]
 
 import random
 def getCardOrder(gameType):
@@ -36,13 +36,39 @@ def getCardByIdx(cards, idx):
             return i
     return None  
 
-def convert2Idx(cards):
+def convertCards2Idx(cards):
     return [x.idx for x in cards]
+
+# convert card or declaration to idx
+def convert2Idx(inCardOrDecl):
+    actionsIdx = []
+    for i in inCardOrDecl:
+        if isinstance(i, str):
+            actionsIdx.append(32) # for weg
+        else:
+            actionsIdx.append(i.idx)
+    return actionsIdx
+
+def createCardByIdx(idx=0):
+    return Card(SORTEDCARDS[idx][0], SORTEDCARDS[idx][1],idx)
+
+def createDeclByIdx(idx=32):
+    return "weg"
+
+def createActionByIdx(idx=0):
+    if idx>31:
+        return createDeclByIdx(idx=idx)
+    return createCardByIdx(idx=idx)
+
+def convertIdx2CardMCTS(action_visits_dic):
+    # action_visits_dic = {3: 4, 30: 3, 7: 3}
+    return [createActionByIdx(x) for x  in action_visits_dic.keys()]
+
 
 def sortCards(cards, gameType="RAMSCH"):
     trumpIdx, otherIdx = getCardOrder(gameType=gameType)
     cardOrder = trumpIdx + otherIdx
-    idxSorted = sorted(convert2Idx(cards), key=cardOrder.index)
+    idxSorted = sorted(convertCards2Idx(cards), key=cardOrder.index)
     cards     = [getCardByIdx(cards, x) for x in idxSorted]
     return cards
 
@@ -81,8 +107,8 @@ def findCards(wantedCards, givenCards, max_equality=100):
     # wantedCards: [EO, GO] 
     # givenCards:  [E9, GO, GA, H9, E7, EK, GK, SO]
     # -> returns True
-    wIdx = convert2Idx(wantedCards)
-    gIdx = convert2Idx(givenCards)
+    wIdx = convertCards2Idx(wantedCards)
+    gIdx = convertCards2Idx(givenCards)
     diff = list(set(wIdx).difference(set(gIdx)))
     if (1-len(diff)/len(wIdx))>=max_equality:
         return True
@@ -93,17 +119,6 @@ def createCardByName(name="EO"):
     rank = name[1]
     idx=SORTEDCARDS.index(name)
     return Card(suit,rank,idx)
-
-def createCardByIdx(idx=0):
-    return Card(SORTEDCARDS[idx][0], SORTEDCARDS[idx][1],idx)
-
-def createDeclByIdx(idx=32):
-    return "weg"
-
-def createActionByIdx(idx=0):
-    if idx>31:
-        return createDeclByIdx(idx=idx)
-    return createCardByIdx(idx=idx)
 
 # remove printing formatting
 def removeFormatting(res: str):
@@ -125,11 +140,11 @@ def subSample(playerCards, table, played, activeP, doEval=False):
     hand         = playerCards[activeP]
     table        = [x for x in table if x is not None]
     allcards     = [x for x in range(32)]
-    unknownCards = convert2Idx(hand+table+played)
+    unknownCards = convertCards2Idx(hand+table+played)
     leftCards    = [i for i in allcards if i not in unknownCards]
     random.shuffle(leftCards)
     sampledCards   = [[], [], [], []]
-    sampledCards[activeP] = convert2Idx(hand)
+    sampledCards[activeP] = convertCards2Idx(hand)
     tmp = activeP
     for _ in range(len(leftCards)):
         p = getNextPlayer(tmp)
@@ -143,6 +158,6 @@ def subSample(playerCards, table, played, activeP, doEval=False):
         for i in range(len(matching)):
             if not len(sampledCards[i])==len(playerCards[i]):
                 print("ERROR!!!")
-            intersec = len(set(sampledCards[i]).intersection(convert2Idx(playerCards[i])))
+            intersec = len(set(sampledCards[i]).intersection(convertCards2Idx(playerCards[i])))
             matching[i] = round(intersec/len(playerCards[i]),2)
     return sampledCards, matching
