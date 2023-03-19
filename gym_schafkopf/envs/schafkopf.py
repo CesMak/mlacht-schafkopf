@@ -1,5 +1,5 @@
 import numpy as np
-from gym_schafkopf.envs.player  import PlayerMCTS, PlayerNN, PlayerRANDOM, PlayerHUMAN
+from gym_schafkopf.envs.player  import PlayerNN, PlayerRANDOM, PlayerHUMAN
 from gym_schafkopf.envs.deck    import Deck
 from gym_schafkopf.envs.helper  import sortCards, getPoints, getMoney, convertCards2Idx, createCardByIdx, createActionByIdx, convert2Idx
 
@@ -44,6 +44,7 @@ class Schafkopf():
         if type=="RANDOM":
             return PlayerRANDOM(name, seed=self.seed)
         elif type=="MCTS":
+            from gym_schafkopf.envs.player  import PlayerMCTS
             return PlayerMCTS(name, type)
         elif type=="NN":
             return PlayerNN

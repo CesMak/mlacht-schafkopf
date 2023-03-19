@@ -52,11 +52,6 @@ class MonteCarloTree:
     s.replayGame(moves=node.gMoves, handCards=node.gInitialHandsIdx)
     s.step(customIdx=chosen_action)
     
-    # schafkopf_env           = gym.make("Schafkopf-v1", options_test=opts_RL)
-    # schafkopf_env.setGameState(deepcopy(node.game_state), deepcopy(node.player_hands))
-    # _, self.rewards, self.gameOver, _ = schafkopf_env.stepTest(chosen_action) # state, rewards, terminal, info
-    #new_node = Node(parent=node, game_state=deepcopy(schafkopf_env.getGameState()), previous_action=chosen_action, player_hands=deepcopy(schafkopf_env.getCards()), allowed_actions=schafkopf_env.test_game.getOptionsList())
-
     new_node = Node(s.getGameState(), parent=node, previous_action=chosen_action)
     new_node.gInitialHandsIdx = node.gInitialHandsIdx
 
@@ -66,10 +61,6 @@ class MonteCarloTree:
   def simulation(self, selected_node):
     if self.gameOver: # special case if is already game over do not expand anymore / create new node!
       return self.rewards["final_rewards"]
-
-    # schafkopf_env           = gym.make("Schafkopf-v1", options_test=opts_RL)
-    # gameOver= deepcopy(selected_node.game_state)["gameOver"]
-    # schafkopf_env.setGameState(deepcopy(selected_node.game_state), deepcopy(selected_node.player_hands))
 
     s     =     Schafkopf(selected_node.gOptions)
     s.replayGame(moves=deepcopy(selected_node.gMoves), handCards=deepcopy(selected_node.gInitialHandsIdx)) # TODO do I need deepcopy here?!
