@@ -1,19 +1,25 @@
 import random
 from gym_schafkopf.envs.mcts.node    import Node
-from gym_schafkopf.envs.schafkopf    import Schafkopf
 from copy import deepcopy
 
 class MonteCarloTree:
   '''
   Inspired by https://github.com/Taschee/schafkopf/blob/master/schafkopf/players/uct_player.py
   '''
-  def __init__(self, game_state, ucb_const=1):
-    self.root = Node(game_state, parent=None, previous_action=None)
+  def __init__(self, game_state, schafobj, ucb_const=1):
+    # schafobj is used there as reference to Schafkopf()
+    # cause import Schafkopf is not possible here (cause of circular imports error!)
+    gS = deepcopy(game_state)
+    gS["options"]["type"] = ["RANDOM", "RANDOM", "RANDOM", "RANDOM"]
+    gS["options"]["print_"] = 0
+    self.root = Node(gS, parent=None, previous_action=None)
     self.ucb_const = ucb_const
     self.rewards = []
     self.gameOver = False
     self.treeList = []
     self.treeFilled = False
+    self.schafobj   = schafobj
+    self.money      = None
 
   def uct_search(self, num_playouts=5, print_=False):
     for i in range(num_playouts):
@@ -45,12 +51,12 @@ class MonteCarloTree:
     for child in node.children:
       not_visited_actions.remove(child.previous_action)
 
-    #TODO: check if this should be random or chosen by player policy
     chosen_action = random.choice(tuple(not_visited_actions))
 
-    s     =     Schafkopf(node.gOptions)
+    s = deepcopy(self.schafobj) # cannot use Schafkopf(node.gOptions) here due to circular import error!
+    s.resetGame(node.gOptions)
     s.replayGame(moves=node.gMoves, handCards=node.gInitialHandsIdx)
-    s.step(customIdx=chosen_action)
+    self.gameOver, _ , self.money = s.step(customIdx=chosen_action)
     
     new_node = Node(s.getGameState(), parent=node, previous_action=chosen_action)
     new_node.gInitialHandsIdx = node.gInitialHandsIdx
@@ -60,16 +66,16 @@ class MonteCarloTree:
 
   def simulation(self, selected_node):
     if self.gameOver: # special case if is already game over do not expand anymore / create new node!
-      return self.rewards["final_rewards"]
+      return self.money
 
-    s     =     Schafkopf(selected_node.gOptions)
+    s = deepcopy(self.schafobj)  # cannot use Schafkopf(node.gOptions) here due to circular import error!
+    s.resetGame(selected_node.gOptions)
     s.replayGame(moves=deepcopy(selected_node.gMoves), handCards=deepcopy(selected_node.gInitialHandsIdx)) # TODO do I need deepcopy here?!
     gO    = s.gameOver
 
-    money = None
     while not gO:
-      gO, points, money = s.step()
-    return money
+      gO, _, self.money = s.step()
+    return self.money
 
   def backup_rewards(self, leaf_node, rewards):
     current_node = leaf_node

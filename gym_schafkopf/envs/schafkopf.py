@@ -43,9 +43,9 @@ class Schafkopf():
     def createPlayer(self, name, type):
         if type=="RANDOM":
             return PlayerRANDOM(name, seed=self.seed)
-        elif type=="MCTS":
+        elif "MCTS" in type:  #"MCTS_10_50" is also a type option 10=subsamples, 50 = playouts
             from gym_schafkopf.envs.player  import PlayerMCTS
-            return PlayerMCTS(name, type)
+            return PlayerMCTS(name, self, type, seed=self.seed)
         elif type=="NN":
             return PlayerNN
         elif type=="HUMAN":
@@ -68,7 +68,7 @@ class Schafkopf():
 
 
     def evaluateTable(self):
-        sortedCards = sortCards(self.table, gameType=self.gameType)
+        sortedCards = sortCards(self.table, gameType=self.gameType, initialCard=self.table[0])
         hightestCard = sortedCards[0]
         playerWithHighestCard = self.table.index(hightestCard)
         points       = getPoints([self.table])
@@ -77,8 +77,8 @@ class Schafkopf():
     def getPlayerAction(self, cp, humanIdx=-1):
         if cp.type == "RANDOM":
             return cp.getAction(self.initialCard, self.phase, self.gameType)
-        # elif cp.type =="MCTS":
-        #     return cp.getAction()
+        elif "MCTS" in cp.type:
+             return cp.getAction(self.getGameState(), self.phase, print_=self.print_)
         # elif cp.type == "NN":
         #     return cp.getAction(self.getState())
         # elif cp.type == "HUMAN":

@@ -1,15 +1,28 @@
 from gym_schafkopf.envs.card import Card
-
+import random
 SORTEDCARDS = ["E7","E8","E9","EX","EU","EO","EK","EA","G7","G8","G9","GX","GU","GO","GK","GA","H7","H8","H9","HX","HU","HO","HK","HA","S7","S8","S9","SX","SU","SO","SK","SA"]
 
-import random
-def getCardOrder(gameType):
+def flatten(in2dlist):
+    return sum(in2dlist, [])
+
+def remList(inlist, remlist):
+    # remove remlist from inlist
+    return [fruit for fruit in inlist if fruit not in remlist]
+
+def getCardOrder(gameType, initialCard=None):
+    # initialCard is used for evaluating a Table
+
+    # The standard case for RAMSCH, RUF
+                #eo                        SU      HA  H1  HK  H9  H8  H7
     trumpIdx  = [5, 13, 21, 29, 4, 12, 20, 28] +  [23, 19, 22, 18, 17, 16] 
-    otherIdx  = [7, 3, 6, 2, 1, 0] + [15, 11, 14, 10, 9, 8] + [31, 27, 30, 26, 25, 24]
-    if gameType=="RAMSCH" or "Ruf" in gameType:            
-                    #eo                        SU      HA  H1  HK  H9  H8  H7
-        trumpIdx  = [5, 13, 21, 29, 4, 12, 20, 28] +  [23, 19, 22, 18, 17, 16] 
-        otherIdx  = [7, 3, 6, 2, 1, 0] + [15, 11, 14, 10, 9, 8] + [31, 27, 30, 26, 25, 24]
+    suits     = {"E": [7, 3, 6, 2, 1, 0], "G": [15, 11, 14, 10, 9, 8], "S": [31, 27, 30, 26, 25, 24]}
+    otherIdx  = suits["E"]+suits["G"]+suits["S"]
+    if gameType=="RAMSCH" or "Ruf" in gameType:
+        if initialCard is not None and initialCard.suit != "H":
+            otherIdx = suits[str(initialCard.suit)] # put leading color first!
+            del suits[str(initialCard.suit)]
+            otherssuits = [*suits.values()] # this is a 2dlist: [[xxx],[xxx]]
+            otherIdx += [j for sub in otherssuits for j in sub]
     return trumpIdx, otherIdx
 
 def getSuits(cards, suit, gameType):
@@ -65,8 +78,9 @@ def convertIdx2CardMCTS(action_visits_dic):
     return [createActionByIdx(x) for x  in action_visits_dic.keys()]
 
 
-def sortCards(cards, gameType="RAMSCH"):
-    trumpIdx, otherIdx = getCardOrder(gameType=gameType)
+def sortCards(cards, gameType="RAMSCH", initialCard=None):
+    # initialCard is used for evaluating a table!
+    trumpIdx, otherIdx = getCardOrder(gameType=gameType, initialCard=initialCard)
     cardOrder = trumpIdx + otherIdx
     idxSorted = sorted(convertCards2Idx(cards), key=cardOrder.index)
     cards     = [getCardByIdx(cards, x) for x in idxSorted]
@@ -86,10 +100,14 @@ def getPoints(input_cards):
     return result
 
 def getMoney(pointsArray, gameType="Ramsch"):
+    #evaluate the game:
     res = [0]*4
     if gameType=="RAMSCH":
         #[0, <30, >30, >90] --> [15, 10, 5, 15x3]
         maxP = max(pointsArray)
+        nummaxP = pointsArray.count(maxP) # are there multiple loosers?
+        if nummaxP == 4:#if 4 players have same: 30 30 30 30
+            return [0]*4
         if maxP >= 90:
             res = [-15]*4
             res[pointsArray.index(maxP)] = 15*3
@@ -99,8 +117,13 @@ def getMoney(pointsArray, gameType="Ramsch"):
                     if p==0 :   res[i] = 15
                     elif p<30 : res[i] = 10
                     else:       res[i] = 5    # p>=30
-            looser = sum(res)*-1
-            res[res.index(0)] = looser
+            if nummaxP==2:#what if 2 players have same: 42 42 36 0
+                looser = (sum(res)*-1)/2
+            else:
+                looser = sum(res)*-1
+            for i,r in enumerate(res):
+                if r == 0:
+                    res[i] = looser
     return res
 
 def findCards(wantedCards, givenCards, max_equality=100):
@@ -140,8 +163,8 @@ def subSample(playerCards, table, played, activeP, doEval=False):
     hand         = playerCards[activeP]
     table        = [x for x in table if x is not None]
     allcards     = [x for x in range(32)]
-    unknownCards = convertCards2Idx(hand+table+played)
-    leftCards    = [i for i in allcards if i not in unknownCards]
+    knownCards = convertCards2Idx(hand+table+played)
+    leftCards    = [i for i in allcards if i not in knownCards]
     random.shuffle(leftCards)
     sampledCards   = [[], [], [], []]
     sampledCards[activeP] = convertCards2Idx(hand)
@@ -161,3 +184,24 @@ def subSample(playerCards, table, played, activeP, doEval=False):
             intersec = len(set(sampledCards[i]).intersection(convertCards2Idx(playerCards[i])))
             matching[i] = round(intersec/len(playerCards[i]),2)
     return sampledCards, matching
+
+def subSamplev2(moves, ap, ownHand):
+    playerInitialCards = [[], [], [], []]
+    for i,idx in enumerate(moves):
+        if not idx>31: # do not append declarations!
+            playerInitialCards[i%4].append(idx)
+
+    ownHandIdx = convertCards2Idx(ownHand)
+
+    leftCards   = remList([x for x in range(32)],  moves + ownHandIdx)
+    random.shuffle(leftCards)
+    tmp = ap
+    for _ in range(len(leftCards)):
+        p = getNextPlayer(tmp)
+        if p==ap:
+            p = getNextPlayer(p)
+        # TODO ML consider trumpFree, suitFree!
+        playerInitialCards[p].append(leftCards.pop())
+        tmp = p
+    playerInitialCards[ap] = ownHandIdx
+    return playerInitialCards

@@ -1,4 +1,4 @@
-from gym_schafkopf.envs.helper  import sortCards, getTrumps, getSuits, getCardOrder
+from gym_schafkopf.envs.helper  import sortCards, getTrumps, getSuits, getCardOrder, createActionByIdx, convertIdx2CardMCTS, convertCards2Idx, subSamplev2
 class Player(object):
     def __init__(self, name, type):
         self.name         = name        # players name
@@ -52,6 +52,11 @@ class Player(object):
     def setTrumpFree(self):
         self.suitFree[0] = 1.0
 
+    def removeCardIdx(self, idx):
+        # e.g. idx = 0 -> remove E7 from hand
+        cardsIdx = convertCards2Idx(self.hand)
+        self.hand.pop(cardsIdx.index(idx))
+
     def getDeclarationOptions(self):
         # TODO check allowed declarations
         # TODO check hand cars EA, GA, SA if RUF is allowed or not etc.
@@ -90,6 +95,7 @@ class Player(object):
 
 import random
 class PlayerRANDOM(Player):
+    # Player that plays random action
     def __init__(self, name, seed=None):
         super().__init__(name, type="RANDOM")
         if seed is not None: random.seed(seed)
@@ -105,16 +111,59 @@ class PlayerNN(Player):
         super().__init__(name, type="NN")
     def getAction(state:list):
         print("TODO")
-
-#from mcts.mct import MonteCarloTree
-class PlayerMCTS(Player):
-    def __init__(self, name):
-        super().__init__(name, type="MCTS")
-    def getAction(possibleCards:list):
-        print("TODO")
-
 class PlayerHUMAN(Player):
+    # Player that is used for replay game?!
     def __init__(self, name):
         super().__init__(name, type="HUMAN")
     def getAction(possibleCards:list):
         print("TODO")
+
+from gym_schafkopf.envs.mcts.mct  import MonteCarloTree
+class PlayerMCTS(Player):
+    def __init__(self, name, schafObj, type, seed = None):
+        super().__init__(name, type="MCTS")
+        if seed is not None: random.seed(seed)
+        self.schafObj = schafObj
+        # default values:
+        self.num_subSamples = 10 # how often should the players be subsampled
+        self.num_playouts   = 50 # how often do you do the mcts kind of depth
+        self.ucb_const      = 50 # mcts const of selecting the best child
+        # type: MCTS_SUBSAMPLES_PLAYOUTS_UCBCONST
+        #       MCTS_OFF_50 -> use real handCards (do not subsample at all)
+        if "_" in type:
+            tmp = type.split("_")
+            if len(tmp)>1:
+                if "OFF" in str(tmp[1]):
+                    self.num_subSamples = -1
+                else:
+                    self.num_subSamples = int(tmp[1])
+            if len(tmp)>2:
+                self.num_playouts   = int(tmp[2])
+            if len(tmp)>3:
+                self.ucb_const      = int(tmp[3])
+    def getAction(self, gS, phase, print_=False):
+        actionsIdx = gS["actions"]
+        if len(actionsIdx) > 1:
+            oba = {}
+            if self.num_subSamples<0: # OFF use real hand Cards!
+                mct =  MonteCarloTree(gS, self.schafObj, ucb_const=self.ucb_const)
+                oba = mct.uct_search(self.num_playouts, print_=False)
+            else:  # do subsample required for simulating real games!
+                for _ in range(self.num_subSamples):
+                    gS["initialHandsIdx"] =  subSamplev2(gS["moves"], gS["activePlayer"], self.hand)
+                    mct =  MonteCarloTree(gS, self.schafObj, ucb_const=1)
+                    mcts_action = mct.uct_search(self.num_playouts, print_=False)
+                    ba = max(mcts_action, key=mcts_action.get)
+                    if print_: print("SAMPLE actions and visits:", mcts_action, convertIdx2CardMCTS(mcts_action), "best action->", ba, createActionByIdx(ba))
+                    if ba not in oba:
+                        oba[ba] = 1
+                    else:
+                        oba[ba]+=1
+            best_action=max(oba, key=oba.get) 
+            if print_: print("TOTAL: best action: ", createActionByIdx(best_action), oba)
+
+        else:
+            best_action = actionsIdx[0] # if there is only one option return it!
+        if phase == 1:
+            self.removeCardIdx(best_action)
+        return createActionByIdx(best_action)
