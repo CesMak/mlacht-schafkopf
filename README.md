@@ -5,6 +5,7 @@ git clone https://github.com/CesMak/mlacht-schafkopf.git
 cd mlacht-schafkopf
 python3 -m venv .env
 source .env/bin/activate
+cd gym
 pip3 install -e .
 ```
 ## Install Test Environment
@@ -12,6 +13,7 @@ pip3 install -e .
 source .env/bin/activate
 ## required for testing environment:
 pip3 install coverage
+pip3 install gymnasium
 ```
 
 # Use Environmment
