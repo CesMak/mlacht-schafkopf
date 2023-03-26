@@ -3,7 +3,7 @@ from random import randrange
 import gymnasium
 import gym_schafkopf
 from gym_schafkopf.envs.schafkopf import Schafkopf 
-from gym_schafkopf.envs.helper    import findCards, createCardByName, subSample, createActionByIdx, convertIdx2CardMCTS
+from gym_schafkopf.envs.helper    import findCards, createCardByName, subSample, createActionByIdx, convertIdx2CardMCTS,deleteFolder
 from gym_schafkopf.envs.mcts.mct  import MonteCarloTree
 from copy import deepcopy
 from datetime import datetime
@@ -208,10 +208,17 @@ class TestSchafkopf(unittest.TestCase):
         # ['RANDOM', 'RANDOM', 'MCTS_10_50_50', 'RANDOM'] [-322.5, 282.5, 195.0, -155.0] 0:01:08.743489
         # ['RANDOM', 'RANDOM', 'MCTS_20_80_50', 'RANDOM'] [-437.5, 392.5, 205.0, -160.0] 0:03:59.666439
 
-        # TODO print MCTS Tree! 
-        # TODO check coverage and if all tests run!
+    def test_mcts_tree(self):
+        deleteFolder("tests/unit/trees/")
+        options = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "MCTS_OFF_30_50", "RANDOM", "RANDOM"], "seed": 56681, "active_player": 0, "print_": 1, "save_tree": 1}
+        s = Schafkopf(options)
+        s.setup_game()
+        for _ in range(12):
+            s.step()
+
+        # PRINT TREE active player is wrong!
+        # 2mal GO ist doch definitiv Falsch?!
         # when printing tree works make some more evaluation regarding ucb const as well!
-        # include subsampling!!
         # auto option and time measurement for mcts step?
 
 ##for debugging and testing:

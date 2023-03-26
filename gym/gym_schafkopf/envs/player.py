@@ -119,6 +119,7 @@ class PlayerHUMAN(Player):
         print("TODO")
 
 from gym_schafkopf.envs.mcts.mct  import MonteCarloTree
+from gym_schafkopf.envs.mcts.tree import Tree
 class PlayerMCTS(Player):
     def __init__(self, name, schafObj, type, seed = None):
         super().__init__(name, type="MCTS")
@@ -141,7 +142,7 @@ class PlayerMCTS(Player):
                 self.num_playouts   = int(tmp[2])
             if len(tmp)>3:
                 self.ucb_const      = int(tmp[3])
-    def getAction(self, gS, phase, print_=False):
+    def getAction(self, gS, phase, print_=False, saveTree=False):
         actionsIdx = gS["actions"]
         if len(actionsIdx) > 1:
             oba = {}
@@ -160,8 +161,13 @@ class PlayerMCTS(Player):
                     else:
                         oba[ba]+=1
             best_action=max(oba, key=oba.get) 
-            if print_: print("TOTAL: best action: ", createActionByIdx(best_action), oba)
-
+            if print_:
+                print("TOTAL: best action: ", createActionByIdx(best_action), oba)
+                fname = "Tree_move_"+str(self.schafObj.move)+"ucb_const"+str(mct.ucb_const)
+            if saveTree:
+                print("Save MCTS Tree now: "+fname)
+                mc_tree = Tree(root_node=mct.root, schafObj=self.schafObj)
+                mc_tree.visualize_tree(filename=fname, ucb=mct.ucb_const)
         else:
             best_action = actionsIdx[0] # if there is only one option return it!
         if phase == 1:

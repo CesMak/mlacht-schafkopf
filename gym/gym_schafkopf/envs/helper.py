@@ -65,6 +65,9 @@ def convert2Idx(inCardOrDecl):
 def createCardByIdx(idx=0):
     return Card(SORTEDCARDS[idx][0], SORTEDCARDS[idx][1],idx)
 
+def idx2Name(idx):
+    return SORTEDCARDS[idx]
+
 def createDeclByIdx(idx=32):
     return "weg"
 
@@ -205,3 +208,11 @@ def subSamplev2(moves, ap, ownHand):
         tmp = p
     playerInitialCards[ap] = ownHandIdx
     return playerInitialCards
+
+def deleteFolder(path="tests/unit/trees/"):
+    #used e.g. to delete the MCTS Trees png folder
+    import os, glob
+    files = glob.glob(path+"*")
+    print(files)
+    for f in files:
+        os.remove(f)

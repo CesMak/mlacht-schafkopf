@@ -35,6 +35,11 @@ class Schafkopf():
         self.initialHandsIdx = []
         self.movesIdx        = []
 
+        # only relevant for an MCTS Player
+        self.saveTree          = 0
+        if "save_tree" in options_dict:
+            self.saveTree          = options_dict["save_tree"]
+
     def createDeck(self):
         d = Deck(seed=self.seed)
         d.shuffle()
@@ -78,7 +83,7 @@ class Schafkopf():
         if cp.type == "RANDOM":
             return cp.getAction(self.initialCard, self.phase, self.gameType)
         elif "MCTS" in cp.type:
-             return cp.getAction(self.getGameState(), self.phase, print_=self.print_)
+             return cp.getAction(self.getGameState(), self.phase, print_=self.print_, saveTree=self.saveTree)
         # elif cp.type == "NN":
         #     return cp.getAction(self.getState())
         # elif cp.type == "HUMAN":

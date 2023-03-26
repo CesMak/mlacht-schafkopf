@@ -6,6 +6,7 @@ class Node:
         self.parent = parent
         self.previous_action = previous_action
         self.visits = 0
+        self.ucbVal = 0 # just for print tree
         self.cumulative_rewards = [0 for i in range(4)]
 
         # the GameState:
@@ -44,7 +45,10 @@ class Node:
     def ucb_value(self, ucb_const):
         if self.visits != 0:
             average_reward = self.get_average_reward(player=self.parent.gActive_Player)
-            return average_reward + ucb_const * np.sqrt(2 * np.log(self.parent.visits) / self.visits)
+            # ucb_const: exploration vs exploitation?
+            tmp = average_reward + ucb_const * np.sqrt(2 * np.log(self.parent.visits) / self.visits)
+            self.ucbVal = tmp
+            return tmp
         else:
             return np.infty
 

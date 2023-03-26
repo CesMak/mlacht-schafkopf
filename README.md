@@ -14,6 +14,9 @@ source .env/bin/activate
 ## required for testing environment:
 pip3 install coverage
 pip3 install gymnasium
+## required for visualizing MCTS
+sudo apt-get install graphviz
+pip3 install graphviz
 ```
 
 # Use Environmment
