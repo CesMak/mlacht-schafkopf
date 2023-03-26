@@ -189,6 +189,7 @@ def subSample(playerCards, table, played, activeP, doEval=False):
     return sampledCards, matching
 
 def subSamplev2(moves, ap, ownHand):
+    # ap = active Player Index
     playerInitialCards = [[], [], [], []]
     for i,idx in enumerate(moves):
         if not idx>31: # do not append declarations!
@@ -206,7 +207,10 @@ def subSamplev2(moves, ap, ownHand):
         # TODO ML consider trumpFree, suitFree!
         playerInitialCards[p].append(leftCards.pop())
         tmp = p
-    playerInitialCards[ap] = ownHandIdx
+    playerInitialCards[ap] += ownHandIdx
+    # Test if the sum of the initial cards is correct:
+    if not sum([sum(i) for i in playerInitialCards]) == 32:
+        print("ERRROR initial PlayerCards is not correct!!!", playerInitialCards)
     return playerInitialCards
 
 def deleteFolder(path="tests/unit/trees/"):

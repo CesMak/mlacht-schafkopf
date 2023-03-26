@@ -1,4 +1,3 @@
-import numpy as np
 from gym_schafkopf.envs.player  import PlayerNN, PlayerRANDOM, PlayerHUMAN
 from gym_schafkopf.envs.deck    import Deck
 from gym_schafkopf.envs.helper  import sortCards, getPoints, getMoney, convertCards2Idx, createCardByIdx, createActionByIdx, convert2Idx
@@ -71,7 +70,6 @@ class Schafkopf():
             # used for replaying and storing a game!
             if self.move==0: self.initialHandsIdx.append(convertCards2Idx(p.hand))
 
-
     def evaluateTable(self):
         sortedCards = sortCards(self.table, gameType=self.gameType, initialCard=self.table[0])
         hightestCard = sortedCards[0]
@@ -134,9 +132,12 @@ class Schafkopf():
         if customIdx<0:
             action    = self.getPlayerAction(cp, humanIdx) # TODO FOR HUMANS
             actionIdx = self.action2Idx(action)
-        else:
+        else: # used in the replay case -> I do not have to calculate the action again its in the replay moves!
             actionIdx = customIdx
             action    = createActionByIdx(actionIdx)
+            # remove the card from the hand!
+            if self.phase == 1:
+                cp.removeCardIdx(actionIdx)
 
         # if actionIdx negative -> action is not possible!
         if actionIdx<0:

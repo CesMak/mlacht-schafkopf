@@ -10,7 +10,7 @@ class MonteCarloTree:
     # schafobj is used there as reference to Schafkopf()
     # cause import Schafkopf is not possible here (cause of circular imports error!)
     gS = deepcopy(game_state)
-    gS["options"]["type"] = ["RANDOM", "RANDOM", "RANDOM", "RANDOM"]
+    gS["options"]["type"] = ["RANDOM", "RANDOM", "RANDOM", "RANDOM"] # used for simulation
     gS["options"]["print_"] = 0
     self.root = Node(gS, parent=None, previous_action=None)
     self.ucb_const = ucb_const
@@ -55,11 +55,14 @@ class MonteCarloTree:
 
     s = deepcopy(self.schafobj) # cannot use Schafkopf(node.gOptions) here due to circular import error!
     s.resetGame(node.gOptions)
+
     s.replayGame(moves=node.gMoves, handCards=node.gInitialHandsIdx)
     self.gameOver, _ , self.money = s.step(customIdx=chosen_action)
     
     new_node = Node(s.getGameState(), parent=node, previous_action=chosen_action)
     new_node.gInitialHandsIdx = node.gInitialHandsIdx
+
+    # use for debugging path to Root:     new_node.get_path()
 
     node.add_child(child_node=new_node)
     return new_node

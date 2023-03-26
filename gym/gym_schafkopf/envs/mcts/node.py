@@ -1,5 +1,6 @@
 # Code https://github.com/Taschee/schafkopf/blob/master/schafkopf/players/mc_node.py
 import numpy as np
+from gym_schafkopf.envs.helper  import idx2Name
 class Node:
     def __init__(self, game_state, parent=None, previous_action=None):
         self.children = []
@@ -10,12 +11,12 @@ class Node:
         self.cumulative_rewards = [0 for i in range(4)]
 
         # the GameState:
-        self.gOptions   = game_state["options"]  # Schafkopf Options
-        self.gMoves   = game_state["moves"] 
+        self.gOptions         = game_state["options"]  # Schafkopf Options
+        self.gMoves           = game_state["moves"]
         self.gInitialHandsIdx = game_state["initialHandsIdx"]
-        self.gActive_Player = game_state["activePlayer"]
-        self.gGameOver       = game_state["gameOver"]
-        self.gActions        = game_state["actions"] # possible actions for current Player
+        self.gActive_Player   = game_state["activePlayer"]
+        self.gGameOver        = game_state["gameOver"]
+        self.gActions         = game_state["actions"] # possible actions for current Player
 
     def add_child(self, child_node):
         self.children.append(child_node)
@@ -67,3 +68,21 @@ class Node:
             return self.cumulative_rewards[player] / self.visits
         else:
             return 0
+
+    def get_path(self):
+        # returns the path from root->EA->E7->... to leaf!
+        node = self
+        pathToRoot = []
+        while node is not None:
+            tmp = node.previous_action
+            if tmp is None:
+                pathToRoot.append("Root")
+            else:
+                pathToRoot.append(idx2Name(tmp))
+            node = node.parent
+        # something like Root->GO->HX->HK->GO is not allowed!!!
+        # if a card is played it is gone!
+        if len(pathToRoot) != len(set(pathToRoot)):
+            actions = [idx2Name(i) for i in self.gActions]
+            print("ERROR!!! - your Tree Path contains 2 times the same card:", pathToRoot, actions)
+        return '->'.join(reversed(pathToRoot))

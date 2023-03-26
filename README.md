@@ -42,32 +42,43 @@ python -m coverage html
 
 
 # Folder structure
-├── mlacht-schafkopf
+```
+├── docu
+│   ├── 01_Tutorials
+│   └── 02_Data
+│       ├── class_diag.drawio
+│       ├── class_diag.png
+│       └── details.odp
+├── gym
 │   ├── gym_schafkopf
 │   │   ├── envs
-│   │   ├── __init__.py
-│   │   ├── __pycache__
-│   │   └── wrappers
+│   │   │   ├── card.py
+│   │   │   ├── deck.py
+│   │   │   ├── player.py
+│   │   │   ├── schafkopf_env.py
+│   │   │   └── schafkopf.py
+│   │   │   ├── helper.py
+│   │   │   ├── mcts
+│   │   │   │   ├── mct.py
+│   │   │   │   ├── node.py
+│   │   │   │   └── tree.py
 │   ├── gym_schafkopf.egg-info
 │   │   ├── dependency_links.txt
 │   │   ├── PKG-INFO
 │   │   ├── requires.txt
 │   │   ├── SOURCES.txt
 │   │   └── top_level.txt
-│   ├── README.md
 │   └── setup.py
-└── schafkopf_docu
-    ├── 01_Tutorials
-    ├── 02_Data
-    │   ├── class_diag.drawio
-    │   ├── class_diag.png
-    │   └── details.odp
-    ├── gym_tests
-    │   ├── integration
-    │   └── unit
-    ├── LICENSE
-    └── README.md
-
+├── LICENSE
+├── README.md
+└── tests
+    ├── integration
+    └── unit
+        ├── test_card.py
+        ├── test_deck.py
+        ├── test_player.py
+        ├── test_schafkopf.py
+``` 
 ### Environments
 This repository hosts the examples that are shown [on the environment creation documentation](https://gymnasium.farama.org/tutorials/environment_creation/).
 - `GridWorldEnv`: Simplistic implementation of gridworld environment
