@@ -187,26 +187,136 @@ class TestSchafkopf(unittest.TestCase):
     #     # oMCTS_OFF_50: SO, SX, EU,                    <- this is how lea plays cards
     #     # reason: cause other players play other cards that might be better for LEA
 
-    # @unittest.skip("This Test runs longer than 4min -> is no unit Test skip it!")
+    @unittest.skip("This Test runs longer than 4min -> is no unit Test skip it!")
     def test_mcts_benchmark(self):
         res = [0, 0, 0, 0]
         total_time = datetime.now()
         diff        = datetime.now()
+
+        # Random Game:
+        for i in range(15):
+            oM = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "RANDOM", "RANDOM", "RANDOM"], "seed": i, "active_player": 0, "print_": 0}
+            p = runFullGame(oM)
+            for i,pp in enumerate(p):
+                res[i] +=pp.money
+        print(oM["type"]+"   ", res, (datetime.now()-diff))
+        diff = datetime.now()
+        res = [0, 0, 0, 0]
+        # MCTS Game
+        print("Benchmark MCTS one Player")
+        for subsample in ["RANDOM", "OFF", "10", "20"]:
+            for playouts in ["10", "20", "50", "80"]:
+                for ucb in ["10", "50", "100", "200", "300", "400", "1000"]:
+                    for i in range(15):
+                        oM = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "RANDOM", "MCTS_"+subsample+"_"+playouts+"_"+ucb, "RANDOM"], "seed": i, "active_player": 0, "print_": 0}
+                        p = runFullGame(oM)
+                        for i,pp in enumerate(p):
+                            res[i] +=pp.money
+                    print(oM["type"], res, (datetime.now()-diff))
+                    diff = datetime.now()
+                    res = [0, 0, 0, 0]
+        print("Total time:", datetime.now()-total_time)
+        # Benchmark MCTS one Player
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_10_10', 'RANDOM'] [-160, 110, 110, -60] 0:00:02.007400
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_10_50', 'RANDOM'] [-142.5, 125, 85, -67.5] 0:00:01.993447
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_10_100', 'RANDOM'] [-155, 125, 95, -65] 0:00:01.943524
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_10_200', 'RANDOM'] [-160, 130, 95, -65] 0:00:01.957479
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_10_300', 'RANDOM'] [-95, 105, 50, -60] 0:00:02.192812
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_10_400', 'RANDOM'] [-95, 105, 50, -60] 0:00:02.644976
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_10_1000', 'RANDOM'] [-95, 105, 50, -60] 0:00:03.017063
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_20_10', 'RANDOM'] [-110, 115, 70, -75] 0:00:05.703681
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_20_50', 'RANDOM'] [-175, 175, 85, -85] 0:00:05.491224
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_20_100', 'RANDOM'] [-185, 105, 120, -40] 0:00:05.677411
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_20_200', 'RANDOM'] [-155, 25, 165, -35] 0:00:05.652956
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_20_300', 'RANDOM'] [-160, -5, 170, -5] 0:00:05.583390
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_20_400', 'RANDOM'] [-160, -5, 170, -5] 0:00:04.747048
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_20_1000', 'RANDOM'] [-125, 30, 135, -40] 0:00:03.482563
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_50_10', 'RANDOM'] [-170, 155, 115, -100] 0:00:08.732799
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_50_50', 'RANDOM'] [-65, 130, 65, -130] 0:00:09.052980
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_50_100', 'RANDOM'] [-130, 85, 105, -60] 0:00:09.322410
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_50_200', 'RANDOM'] [-160, 100, 170, -110] 0:00:13.237513
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_50_300', 'RANDOM'] [-170, 105, 140, -75] 0:00:10.761275
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_50_400', 'RANDOM'] [-170, 105, 140, -75] 0:00:09.360959
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_50_1000', 'RANDOM'] [-85.0, 90, 85, -90.0] 0:00:08.535611
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_80_10', 'RANDOM'] [-55, 90, 85, -120] 0:00:17.840673
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_80_50', 'RANDOM'] [-180, 125, 75, -20] 0:00:16.388665
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_80_100', 'RANDOM'] [-120, 75, 65, -20] 0:00:14.290495
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_80_200', 'RANDOM'] [-155, 95, 120, -60] 0:00:14.573909
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_80_300', 'RANDOM'] [-120, 120, 120, -120] 0:00:16.992466
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_80_400', 'RANDOM'] [-75, 95, 80, -100] 0:00:17.834897
+        # ['RANDOM', 'RANDOM', 'MCTS_OFF_80_1000', 'RANDOM'] [-130, 95, 75, -40] 0:00:13.988913
+        # ['RANDOM', 'RANDOM', 'MCTS_10_10_10', 'RANDOM'] [-110, 120, 65, -75] 0:00:21.219812
+        # ['RANDOM', 'RANDOM', 'MCTS_10_10_50', 'RANDOM'] [-110, 120, 65, -75] 0:00:24.250880
+        # ['RANDOM', 'RANDOM', 'MCTS_10_10_100', 'RANDOM'] [-110, 120, 65, -75] 0:00:20.889986
+        # ['RANDOM', 'RANDOM', 'MCTS_10_10_200', 'RANDOM'] [-110, 120, 65, -75] 0:00:23.109078
+        # ['RANDOM', 'RANDOM', 'MCTS_10_10_300', 'RANDOM'] [-110, 120, 65, -75] 0:00:21.387712
+        # ['RANDOM', 'RANDOM', 'MCTS_10_10_400', 'RANDOM'] [-110, 120, 65, -75] 0:00:23.085678
+        # ['RANDOM', 'RANDOM', 'MCTS_10_10_1000', 'RANDOM'] [-110, 120, 65, -75] 0:00:21.825071
+        # ['RANDOM', 'RANDOM', 'MCTS_10_20_10', 'RANDOM'] [-50, 80, 85, -115] 0:00:40.824571
+        # ['RANDOM', 'RANDOM', 'MCTS_10_20_50', 'RANDOM'] [-50, 80, 85, -115] 0:00:40.536765
+        # ['RANDOM', 'RANDOM', 'MCTS_10_20_100', 'RANDOM'] [-50, 80, 85, -115] 0:00:42.048412
+        # ['RANDOM', 'RANDOM', 'MCTS_10_20_200', 'RANDOM'] [-50, 80, 85, -115] 0:00:40.513044
+        # ['RANDOM', 'RANDOM', 'MCTS_10_20_300', 'RANDOM'] [-50, 80, 85, -115] 0:00:39.851259
+        # ['RANDOM', 'RANDOM', 'MCTS_10_20_400', 'RANDOM'] [-50, 80, 85, -115] 0:00:39.877120
+        # ['RANDOM', 'RANDOM', 'MCTS_10_20_1000', 'RANDOM'] [-50, 80, 85, -115] 0:00:41.135376
+        # ['RANDOM', 'RANDOM', 'MCTS_10_50_10', 'RANDOM'] [120, 25, -10, -135] 0:01:30.681763
+        # ['RANDOM', 'RANDOM', 'MCTS_10_50_50', 'RANDOM'] [120, 25, -10, -135] 0:01:31.646014
+        # ['RANDOM', 'RANDOM', 'MCTS_10_50_100', 'RANDOM'] [120, 25, -10, -135] 0:01:32.253166
+        # ['RANDOM', 'RANDOM', 'MCTS_10_50_200', 'RANDOM'] [120, 25, -10, -135] 0:01:29.756848
+        # ['RANDOM', 'RANDOM', 'MCTS_10_50_300', 'RANDOM'] [120, 25, -10, -135] 0:01:30.148696
+        # ['RANDOM', 'RANDOM', 'MCTS_10_50_400', 'RANDOM'] [120, 25, -10, -135] 0:01:30.282228
+        # ['RANDOM', 'RANDOM', 'MCTS_10_50_1000', 'RANDOM'] [120, 25, -10, -135] 0:01:29.943735
+        # ['RANDOM', 'RANDOM', 'MCTS_10_80_10', 'RANDOM'] [-105, 60, 110, -65] 0:02:27.044272
+        # ['RANDOM', 'RANDOM', 'MCTS_10_80_50', 'RANDOM'] [-105, 60, 110, -65] 0:02:21.881870
+        # ['RANDOM', 'RANDOM', 'MCTS_10_80_100', 'RANDOM'] [-105, 60, 110, -65] 0:02:23.001645
+        # ['RANDOM', 'RANDOM', 'MCTS_10_80_200', 'RANDOM'] [-105, 60, 110, -65] 0:02:25.238219
+        # ['RANDOM', 'RANDOM', 'MCTS_10_80_300', 'RANDOM'] [-105, 60, 110, -65] 0:02:27.116918
+        # ['RANDOM', 'RANDOM', 'MCTS_10_80_400', 'RANDOM'] [-105, 60, 110, -65] 0:02:29.413822
+        # ['RANDOM', 'RANDOM', 'MCTS_10_80_1000', 'RANDOM'] [-105, 60, 110, -65] 0:02:28.011865
+        # ['RANDOM', 'RANDOM', 'MCTS_20_10_10', 'RANDOM'] [5, 85, -30, -60] 0:00:43.140565
+        # ['RANDOM', 'RANDOM', 'MCTS_20_10_50', 'RANDOM'] [5, 85, -30, -60] 0:00:43.699808
+        # ['RANDOM', 'RANDOM', 'MCTS_20_10_100', 'RANDOM'] [5, 85, -30, -60] 0:00:43.217509
+        # ['RANDOM', 'RANDOM', 'MCTS_20_10_200', 'RANDOM'] [5, 85, -30, -60] 0:00:43.327822
+        # ['RANDOM', 'RANDOM', 'MCTS_20_10_300', 'RANDOM'] [5, 85, -30, -60] 0:00:43.367453
+        # ['RANDOM', 'RANDOM', 'MCTS_20_10_400', 'RANDOM'] [5, 85, -30, -60] 0:00:42.885367
+        # ['RANDOM', 'RANDOM', 'MCTS_20_10_1000', 'RANDOM'] [5, 85, -30, -60] 0:00:42.894916
+        # ['RANDOM', 'RANDOM', 'MCTS_20_20_10', 'RANDOM'] [-80, 100, 80, -100] 0:01:18.218780
+        # ['RANDOM', 'RANDOM', 'MCTS_20_20_50', 'RANDOM'] [-80, 100, 80, -100] 0:01:17.949795
+        # ['RANDOM', 'RANDOM', 'MCTS_20_20_100', 'RANDOM'] [-80, 100, 80, -100] 0:01:17.807103
+        # ['RANDOM', 'RANDOM', 'MCTS_20_20_200', 'RANDOM'] [-80, 100, 80, -100] 0:01:17.672612
+        # ['RANDOM', 'RANDOM', 'MCTS_20_20_300', 'RANDOM'] [-80, 100, 80, -100] 0:01:17.551208
+        # ['RANDOM', 'RANDOM', 'MCTS_20_20_400', 'RANDOM'] [-80, 100, 80, -100] 0:01:17.989084
+        # ['RANDOM', 'RANDOM', 'MCTS_20_20_1000', 'RANDOM'] [-80, 100, 80, -100] 0:01:17.798866
+        # ['RANDOM', 'RANDOM', 'MCTS_20_50_10', 'RANDOM'] [10, 40, 50, -100] 0:02:57.620850
+        # ['RANDOM', 'RANDOM', 'MCTS_20_50_50', 'RANDOM'] [10, 40, 50, -100] 0:02:56.322627
+        # ['RANDOM', 'RANDOM', 'MCTS_20_50_100', 'RANDOM'] [10, 40, 50, -100] 0:02:56.778613
+        # ['RANDOM', 'RANDOM', 'MCTS_20_50_200', 'RANDOM'] [10, 40, 50, -100] 0:02:56.694615
+        # ['RANDOM', 'RANDOM', 'MCTS_20_50_300', 'RANDOM'] [10, 40, 50, -100] 0:02:56.118454
+        # ['RANDOM', 'RANDOM', 'MCTS_20_50_400', 'RANDOM'] [10, 40, 50, -100] 0:02:56.949109
+        # ['RANDOM', 'RANDOM', 'MCTS_20_50_1000', 'RANDOM'] [10, 40, 50, -100] 0:02:57.169749
+        # ['RANDOM', 'RANDOM', 'MCTS_20_80_10', 'RANDOM'] [-155, 65, 110, -20] 0:04:56.824123
+        # ['RANDOM', 'RANDOM', 'MCTS_20_80_50', 'RANDOM'] [-155, 65, 110, -20] 0:04:58.563570
+        # ['RANDOM', 'RANDOM', 'MCTS_20_80_100', 'RANDOM'] [-155, 65, 110, -20] 0:05:00.219707
+        # ['RANDOM', 'RANDOM', 'MCTS_20_80_200', 'RANDOM'] [-155, 65, 110, -20] 0:04:59.501111
+        # ['RANDOM', 'RANDOM', 'MCTS_20_80_300', 'RANDOM'] [-155, 65, 110, -20] 0:04:55.936276
+        # ['RANDOM', 'RANDOM', 'MCTS_20_80_400', 'RANDOM'] [-155, 65, 110, -20] 0:05:02.332643
+        # ['RANDOM', 'RANDOM', 'MCTS_20_80_1000', 'RANDOM'] [-155, 65, 110, -20] 0:04:59.522420
+        # Total time: 1:48:28.061632
+
+    #@unittest.skip("This Test runs longer than 4min -> is no unit Test skip it!")
+    def test_mcts_benchmark_Old(self):
+        total_time = datetime.now()
         print("Benchmark MCTS one Player")
         for j in ["RANDOM", "MCTS_10_20_50", "MCTS_10_50_50", "MCTS_20_80_50"]:
+            res = [0, 0, 0, 0]
+            diff        = datetime.now()
             for i in range(15):
-                oM = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "RANDOM", j, "RANDOM"], "seed": i, "active_player": 0, "print_": 1}
+                oM = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "RANDOM", j, "RANDOM"], "seed": i, "active_player": 0, "print_": 0}
                 p = runFullGame(oM)
                 for i,pp in enumerate(p):
                     res[i] +=pp.money
             print(oM["type"], res, (datetime.now()-diff))
-            diff = datetime.now()
         print("Total time:", datetime.now()-total_time)
-        # Result: 
-        # ['RANDOM', 'RANDOM', 'RANDOM', 'RANDOM']        [-130.0, 110, 115.0, -95] 0:00:00.008686
-        # ['RANDOM', 'RANDOM', 'MCTS_10_20_50', 'RANDOM'] [-252.5, 177.5, 185.0, -110.0] 0:00:26.108119
-        # ['RANDOM', 'RANDOM', 'MCTS_10_50_50', 'RANDOM'] [-322.5, 282.5, 195.0, -155.0] 0:01:08.743489
-        # ['RANDOM', 'RANDOM', 'MCTS_20_80_50', 'RANDOM'] [-437.5, 392.5, 205.0, -160.0] 0:03:59.666439
 
     # def test_mcts_tree(self):
     #     deleteFolder("tests/unit/trees/")
@@ -216,7 +326,10 @@ class TestSchafkopf(unittest.TestCase):
     #     for _ in range(12):
     #         s.step()
 
-        # when printing tree works make some more evaluation regarding ucb const as well!
+        # TODO ML: irgendwas kann noch nicht stimmen 
+        # MCTS Player ist nur minimal besser als der RANDOM spieler?! mit erheblichem Aufwand???!!!
+        # GUT Ist jedoch schonmal dass er im offFall recht gut ist. 
+        # vllt. funktioniert das subsamplev2 noch immer nicht richtig!!! 
         # auto option and time measurement for mcts step?
 
 ##for debugging and testing:

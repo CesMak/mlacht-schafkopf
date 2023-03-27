@@ -1,6 +1,6 @@
 from gym_schafkopf.envs.player  import PlayerNN, PlayerRANDOM, PlayerHUMAN
 from gym_schafkopf.envs.deck    import Deck
-from gym_schafkopf.envs.helper  import sortCards, getPoints, getMoney, convertCards2Idx, createCardByIdx, createActionByIdx, convert2Idx
+from gym_schafkopf.envs.helper  import getMoney, convertCards2Idx, createCardByIdx, createActionByIdx, convert2Idx, evaluateTable
 
 class Schafkopf():
     def __init__(self, options_dict):
@@ -69,13 +69,6 @@ class Schafkopf():
                 p.showHand()
             # used for replaying and storing a game!
             if self.move==0: self.initialHandsIdx.append(convertCards2Idx(p.hand))
-
-    def evaluateTable(self):
-        sortedCards = sortCards(self.table, gameType=self.gameType, initialCard=self.table[0])
-        hightestCard = sortedCards[0]
-        playerWithHighestCard = self.table.index(hightestCard)
-        points       = getPoints([self.table])
-        return hightestCard, playerWithHighestCard, points
 
     def getPlayerAction(self, cp, humanIdx=-1):
         if cp.type == "RANDOM":
@@ -161,7 +154,7 @@ class Schafkopf():
             self.initialCard = self.getInitialCard()
             if (self.move+1)%4==0:
                 # round ends
-                hC, winnerIdx, points = self.evaluateTable()
+                hC, winnerIdx, points = evaluateTable(self.table, self.gameType)
                 self.players[winnerIdx].update(points, hC, self.table)
                 self.table = [None, None, None, None]
                 self.initialCard = None

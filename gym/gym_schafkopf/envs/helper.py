@@ -129,6 +129,13 @@ def getMoney(pointsArray, gameType="Ramsch"):
                     res[i] = looser
     return res
 
+def evaluateTable(table, gameType):
+    sortedCards = sortCards(table, gameType=gameType, initialCard=table[0])
+    hightestCard = sortedCards[0]
+    playerWithHighestCard = table.index(hightestCard)
+    points       = getPoints([table])
+    return hightestCard, playerWithHighestCard, points
+
 def findCards(wantedCards, givenCards, max_equality=100):
     # wantedCards: [EO, GO] 
     # givenCards:  [E9, GO, GA, H9, E7, EK, GK, SO]
@@ -191,15 +198,25 @@ def subSample(playerCards, table, played, activeP, doEval=False):
 def subSamplev2(moves, ap, ownHand):
     # ap = active Player Index
     playerInitialCards = [[], [], [], []]
+    tmpTable = [None, None, None, None]
+    tmpAP    = 0#each game starts with player 0 give the cards according to moves!
+    # NOTE ML this might change if another player wins the declaration phase!!!
     for i,idx in enumerate(moves):
         if not idx>31: # do not append declarations!
-            playerInitialCards[i%4].append(idx)
+            playerInitialCards[tmpAP].append(idx)
+            tmpTable[tmpAP] = createCardByIdx(idx)
+            tmpAP = getNextPlayer(tmpAP)
+            if tmpTable.count(None)==0:
+                _ , tmpAP, _ = evaluateTable(tmpTable, "RAMSCH")
+                tmpTable = [None, None, None, None]
+
 
     ownHandIdx = convertCards2Idx(ownHand)
 
     leftCards   = remList([x for x in range(32)],  moves + ownHandIdx)
     random.shuffle(leftCards)
     tmp = ap
+    # hand out left cards but not to ap!
     for _ in range(len(leftCards)):
         p = getNextPlayer(tmp)
         if p==ap:
@@ -209,8 +226,11 @@ def subSamplev2(moves, ap, ownHand):
         tmp = p
     playerInitialCards[ap] += ownHandIdx
     # Test if the sum of the initial cards is correct:
-    if not sum([sum(i) for i in playerInitialCards]) == 32:
-        print("ERRROR initial PlayerCards is not correct!!!", playerInitialCards)
+    if not all([len(i)==8 for i in playerInitialCards]):
+        print("ERROR INITIAL CARDS:::")
+        for j,i in enumerate(playerInitialCards):
+            if len(i) !=8:
+                print("Player", j," has ", len(i), "cards: ", i, " own Hand: ", ownHand)
     return playerInitialCards
 
 def deleteFolder(path="tests/unit/trees/"):
