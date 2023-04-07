@@ -19,15 +19,22 @@ sudo apt-get install graphviz
 pip3 install graphviz
 ```
 
+# Bash commands
+```bash
+alias cd_schafkopf='source /home/markus/Documents/06_Software_Projects/mlacht-schafkopf/.env/bin/activate && cd /home/markus/Documents/06_Software_Projects/mlacht-schafkopf'
+alias run_all_tests='cd /home/markus/Documents/06_Software_Projects/mlacht-schafkopf/tests/unit && python3 -m coverage run -m unittest && python -m coverage report && cd /home/markus/Documents/06_Software_Projects/mlacht-schafkopf'
+```
+
 # Use Environmment
 ```python
 import gym_examples
+# TODO ML
 env = gymnasium.make('gym_examples/GridWorld-v0')
 ```
 
 # Run Unit Tests
 ```bash
-cd /schafkopf/schafkopf_docu/gym_tests
+cd /mlacht-schafkopf/tests/unit
 
 # run all testclasses
 python -m unittest discover -v
@@ -39,8 +46,6 @@ python -m coverage run -m unittest
 python -m coverage report
 python -m coverage html
 ```
-
-
 # Folder structure
 ```
 ├── docu
