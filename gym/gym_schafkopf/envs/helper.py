@@ -65,6 +65,12 @@ def convert2Idx(inCardOrDecl):
 def createCardByIdx(idx=0):
     return Card(SORTEDCARDS[idx][0], SORTEDCARDS[idx][1],idx)
 
+def createCardsByIdx(list_idx):
+    return [createCardByIdx(i) for i in list_idx]
+
+def idxs2Names(list_idx):
+    return [idx2Name(i) for i in list_idx]
+
 def idx2Name(idx):
     return SORTEDCARDS[idx]
 
@@ -129,12 +135,16 @@ def getMoney(pointsArray, gameType="Ramsch"):
                     res[i] = looser
     return res
 
-def evaluateTable(table, gameType):
-    sortedCards = sortCards(table, gameType=gameType, initialCard=table[0])
+def evaluateTable(table, gameType, initialCard):
+    # table = [card player 1, card player 2, card player 3, card player 4]
+    sortedCards = sortCards(table, gameType=gameType, initialCard=initialCard)
     hightestCard = sortedCards[0]
     playerWithHighestCard = table.index(hightestCard)
     points       = getPoints([table])
     return hightestCard, playerWithHighestCard, points
+
+def createTable(listCardNames):
+    return [createCardByName(i) for i in listCardNames]
 
 def findCards(wantedCards, givenCards, max_equality=100):
     # wantedCards: [EO, GO] 
@@ -201,15 +211,17 @@ def subSamplev2(moves, ap, ownHand):
     tmpTable = [None, None, None, None]
     tmpAP    = 0#each game starts with player 0 give the cards according to moves!
     # NOTE ML this might change if another player wins the declaration phase!!!
+    initialCard = None
     for i,idx in enumerate(moves):
         if not idx>31: # do not append declarations!
             playerInitialCards[tmpAP].append(idx)
             tmpTable[tmpAP] = createCardByIdx(idx)
+            if tmpTable.count(None)==3:
+                initialCard = tmpTable[tmpAP]
             tmpAP = getNextPlayer(tmpAP)
             if tmpTable.count(None)==0:
-                _ , tmpAP, _ = evaluateTable(tmpTable, "RAMSCH")
+                _ , tmpAP, _ = evaluateTable(tmpTable, "RAMSCH", initialCard)
                 tmpTable = [None, None, None, None]
-
 
     ownHandIdx = convertCards2Idx(ownHand)
 
@@ -240,3 +252,11 @@ def deleteFolder(path="tests/unit/trees/"):
     print(files)
     for f in files:
         os.remove(f)
+
+def printOBA(oba):
+    # oba = overall best action is a dict with idx:visists
+    # used for printing total action of mcts player
+    res = ""
+    for key,value in oba.items():
+        res += (str(createCardByIdx(key))+": "+str(value))+", "
+    return res

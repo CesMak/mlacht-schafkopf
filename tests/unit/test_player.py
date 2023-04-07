@@ -2,7 +2,7 @@ import unittest
 from random import randrange
 import gymnasium
 import gym_schafkopf
-from gym_schafkopf.envs.player import PlayerRANDOM 
+from gym_schafkopf.envs.player import PlayerRANDOM, PlayerHUMAN
 from gym_schafkopf.envs.deck import Deck 
 
 class TestPlayer(unittest.TestCase):
@@ -46,6 +46,22 @@ class TestPlayer(unittest.TestCase):
             print(pRR.name+" plays "+str(pRR.hand[i]))
             opts       = pR.getOptions(pRR.hand[i], phase=1, gameType="RAMSCH")
             print(pR.name+" can play now "+str(opts))
+
+    def test_PlayerHUMAN(self):
+        #test a KeyboardPlayer
+        pR = PlayerHUMAN("Markus")
+        pRR= PlayerRANDOM("Hans")
+        d  = Deck(seed=8)
+        d.shuffle()
+        pR.draw(d, numCards=8)
+        pRR.draw(d, numCards=8)
+        options_declaration = pR.getOptions(None, phase=0, gameType="RAMSCH")
+        assert options_declaration[0]=="weg"
+        opts       = pR.getOptions(None, phase=1, gameType="RAMSCH")
+        assert len(opts) == 8 # empty table 8 cards can be played!
+        # TODO test manually diffrent inputs: EA, EE, EF, GK
+        #a = pR.getAction(None, 1, "RAMSCH")
+
 # for debugging and testing:
-# if __name__ == "__main__":
-#     unittest.main()
+if __name__ == "__main__":
+    unittest.main()

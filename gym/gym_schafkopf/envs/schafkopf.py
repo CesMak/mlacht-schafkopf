@@ -53,7 +53,7 @@ class Schafkopf():
         elif type=="NN":
             return PlayerNN
         elif type=="HUMAN":
-            return PlayerHUMAN
+            return PlayerHUMAN(name)
         else:
             print("ERROR Type not known!")
             return None
@@ -75,10 +75,10 @@ class Schafkopf():
             return cp.getAction(self.initialCard, self.phase, self.gameType)
         elif "MCTS" in cp.type:
              return cp.getAction(self.getGameState(), self.phase, print_=self.print_, saveTree=self.saveTree)
+        elif cp.type == "HUMAN":
+            return cp.getAction(self.initialCard, self.phase, self.gameType)
         # elif cp.type == "NN":
         #     return cp.getAction(self.getState())
-        # elif cp.type == "HUMAN":
-        #     return humanIdx
         # else:
         #     print("ERROR Player Name not valid!")
 
@@ -154,7 +154,7 @@ class Schafkopf():
             self.initialCard = self.getInitialCard()
             if (self.move+1)%4==0:
                 # round ends
-                hC, winnerIdx, points = evaluateTable(self.table, self.gameType)
+                hC, winnerIdx, points = evaluateTable(self.table, self.gameType, self.initialCard)
                 self.players[winnerIdx].update(points, hC, self.table)
                 self.table = [None, None, None, None]
                 self.initialCard = None

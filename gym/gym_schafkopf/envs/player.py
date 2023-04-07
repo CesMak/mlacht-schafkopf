@@ -1,4 +1,4 @@
-from gym_schafkopf.envs.helper  import sortCards, getTrumps, getSuits, getCardOrder, createActionByIdx, convertIdx2CardMCTS, convertCards2Idx, subSamplev2
+from gym_schafkopf.envs.helper  import sortCards, getTrumps, getSuits, getCardOrder, createActionByIdx, convertIdx2CardMCTS, convertCards2Idx, subSamplev2, createCardByName, printOBA
 class Player(object):
     def __init__(self, name, type):
         self.name         = name        # players name
@@ -91,6 +91,7 @@ class Player(object):
         if phase == 0: # declaration
             return self.getDeclarationOptions()
         else:               # playing phase
+            # get card options!
             return self.getPlayingOptions(initialCard, gameType=gameType)
 
 import random
@@ -115,8 +116,26 @@ class PlayerHUMAN(Player):
     # Player that is used for replay game?!
     def __init__(self, name):
         super().__init__(name, type="HUMAN")
-    def getAction(possibleCards:list):
-        print("TODO")
+    def getAction(self, initialCard, phase, gameType):
+        opts=super().getOptions(initialCard, phase=phase, gameType=gameType)
+        cardStr = input("Your choice("+str(opts)+"):")
+        if phase==0:
+            return "weg"
+        else:
+            cardToPlay = None
+            try:
+                cardToPlay = createCardByName(cardStr)
+            except Exception as e:
+                print("I do not know this card:", cardStr)
+                print("Try again!")
+                return self.getAction(initialCard, phase, gameType)
+        if cardToPlay.idx not in convertCards2Idx(opts):
+            print("You are not allowed to play", cardToPlay)
+            print("Try again and choose one of", opts)
+            return self.getAction(initialCard, phase, gameType)
+        if phase == 1:
+            self.removeCardIdx(cardToPlay.idx)
+        return cardToPlay
 
 from gym_schafkopf.envs.mcts.mct  import MonteCarloTree
 from gym_schafkopf.envs.mcts.tree import Tree
@@ -128,7 +147,7 @@ class PlayerMCTS(Player):
         # default values:
         self.num_subSamples = 10 # how often should the players be subsampled
         self.num_playouts   = 50 # how often do you do the mcts kind of depth
-        self.ucb_const      = 50 # mcts const of selecting the best child
+        self.ucb_const      = 200 # mcts const of selecting the best child exploration vs exploitation
         # type: MCTS_SUBSAMPLES_PLAYOUTS_UCBCONST
         #       MCTS_OFF_50 -> use real handCards (do not subsample at all)
         if "_" in type:
@@ -152,17 +171,18 @@ class PlayerMCTS(Player):
             else:  # do subsample required for simulating real games!
                 for _ in range(self.num_subSamples):
                     gS["initialHandsIdx"] =  subSamplev2(gS["moves"], gS["activePlayer"], self.hand)
-                    mct =  MonteCarloTree(gS, self.schafObj, ucb_const=1)
+                    mct =  MonteCarloTree(gS, self.schafObj, ucb_const=self.ucb_const)
                     mcts_action = mct.uct_search(self.num_playouts, print_=False)
                     ba = max(mcts_action, key=mcts_action.get)
-                    if print_: print("SAMPLE actions and visits:", mcts_action, convertIdx2CardMCTS(mcts_action), "best action->", ba, createActionByIdx(ba))
+                    if print_ and self.num_subSamples<20:
+                        print("SAMPLE actions and visits:", mcts_action, convertIdx2CardMCTS(mcts_action), "best action->", ba, createActionByIdx(ba))
                     if ba not in oba:
                         oba[ba] = 1
                     else:
                         oba[ba]+=1
             best_action=max(oba, key=oba.get) 
             if print_:
-                print("TOTAL: best action: ", createActionByIdx(best_action), oba)
+                print("MCTS options: ", printOBA(oba), "-->",createActionByIdx(best_action))
                 fname = "Tree_move_"+str(self.schafObj.move)+"ucb_const"+str(mct.ucb_const)
             if saveTree:
                 print("Save MCTS Tree now: "+fname)
