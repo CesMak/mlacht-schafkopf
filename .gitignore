@@ -54,3 +54,5 @@ docs/_build/
 
 #virtual python Environment:
 .env
+
+README_old.md
