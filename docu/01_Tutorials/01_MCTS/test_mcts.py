@@ -9,7 +9,6 @@ from gym_schafkopf.envs.mcts.mct  import MonteCarloTree
 class TestSchafkopf(unittest.TestCase):
     #@unittest.skip("This Test requires user(keyboard) inputs -> skip it!")
     def test_HUMANKEYBOARD(self):
-        # play some steps then subsample!
         options = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["HUMAN", "MCTS_20_50_200", "MCTS_20_50_200", "MCTS_20_50_200"], "seed": 451, "active_player": 0, "print_": 1, "save_tree": 0}
         s = Schafkopf(options_dict=options)
         s.setup_game()

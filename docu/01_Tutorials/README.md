@@ -1,6 +1,14 @@
-# Sheepshead Rules
+# Why choose Sheepshead as an Example? 
 In this tutorial we use a certain variant of the bavarian card game sheeps head(Schafkopf) to
 learn and understand **basic machine learning/reinforcement learning techniques**.
+Sheepshead:
+* is an imperfect information game (you do not know the cards of your enemys)
+* this makes it much harder compared to chess, go etc.
+* you have many diffrent possibilities of dealing 32 cards to 4 players:
+  - 32 x 24 x 16 = 12.288
+* you have to decide in step1 what game(DURCHMARSCH OR NOT) you choose (for RAMSCH) which is very hard to learn!
+* if you extend this game to RUF you have to learn to play with another player in a team.
+# Sheepshead Rules
 Here is a quick overview of the rules.
 There are 4 player having each 8 cards.
 ![rules_schafkopf](01_MCTS/rules.png)
