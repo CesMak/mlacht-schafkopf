@@ -47,9 +47,8 @@ class Node:
         if self.visits != 0:
             average_reward = self.get_average_reward(player=self.parent.gActive_Player)
             # ucb_const: exploration vs exploitation?
-            tmp = average_reward + ucb_const * np.sqrt(2 * np.log(self.parent.visits) / self.visits)
-            self.ucbVal = tmp
-            return tmp
+            self.ucbVal = average_reward + ucb_const * np.sqrt(2 * np.log(self.parent.visits) / self.visits)
+            return self.ucbVal
         else:
             return np.infty
 

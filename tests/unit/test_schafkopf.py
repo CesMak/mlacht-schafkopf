@@ -181,7 +181,7 @@ class TestSchafkopf(unittest.TestCase):
             players = runFullGame(oM)
             assert players[1].money == m, "Lea: "+j+" Expected "+str(m)+" for Lea but got:"+str(players[1].money)
 
-    @unittest.skip("This Test runs longer than 4min -> is no unit Test skip it!")
+    #@unittest.skip("This Test runs longer than 4min -> is no unit Test skip it!")
     def test_mcts_benchmark(self):
         res = [0, 0, 0, 0]
         total_time = datetime.now()
@@ -197,7 +197,7 @@ class TestSchafkopf(unittest.TestCase):
         diff = datetime.now()
         res = [0, 0, 0, 0]
         # MCTS Game
-        for subsample in ["OFF", "10", "20"]:
+        for subsample in ["OFF", "10", "20", "30"]:
             for playouts in ["10", "20", "50", "80"]:
                 for ucb in ["10", "50", "100", "200", "300", "400", "1000"]:
                     for i in range(15):
@@ -212,42 +212,42 @@ class TestSchafkopf(unittest.TestCase):
         print("Total time:", datetime.now()-total_time)
         # see benchmark at end of file!
 
-    # def test_mcts_tree(self):
-    #     # save a MCTS Tree
-    #     deleteFolder("tests/unit/trees/")
-    #     options = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "MCTS_OFF_80_50", "RANDOM", "RANDOM"], "seed": 56681, "active_player": 0, "print_": 1, "save_tree": 1}
-    #     s = Schafkopf(options)
-    #     s.setup_game()
-    #     for _ in range(12):
-    #         s.step()
+    def test_mcts_tree(self):
+        # save a MCTS Tree
+        deleteFolder("tests/unit/trees/")
+        options = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "MCTS_OFF_80_50", "RANDOM", "RANDOM"], "seed": 56681, "active_player": 0, "print_": 1, "save_tree": 1}
+        s = Schafkopf(options)
+        s.setup_game()
+        for _ in range(12):
+            s.step()
 
-    # def test_subSampleV2(self):
-    #     # play some steps then subsample!
-    #     options = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "RANDOM", "RANDOM", "RANDOM"], "seed": 1170, "active_player": 0, "print_": 1}
-    #     s = Schafkopf(options_dict=options)
-    #     s.setup_game()
-    #     for _ in range(26):
-    #         s.step()
-    #     players     = s.players
-    #     aP          =  s.active_player
-    #     ownHand     = players[aP].hand
-    #     playerCards = subSamplev2(s.movesIdx, aP, ownHand)
-    #     for sampled,trueC in zip(playerCards, s.initialHandsIdx):
-    #         intersec = len(set(sampled).intersection(trueC))
-    #         perc     = round(intersec/8*100,1)
-    #         print(createCardsByIdx(trueC), "-->", sortCards(createCardsByIdx(sampled)), intersec, "-->", str(perc)+"%")
-    #     assert playerCards       == [[2, 20, 12, 7, 13, 31, 5, 26], [6, 18, 14, 25, 21, 27, 22, 4], [3, 16, 8, 10, 28, 23, 17, 24], [0, 29, 9, 1, 19, 30, 15, 11]]
+    def test_subSampleV2(self):
+        # play some steps then subsample!
+        options = {"names": ["Max", "Lea", "Jo", "Tim"], "type": ["RANDOM", "RANDOM", "RANDOM", "RANDOM"], "seed": 1170, "active_player": 0, "print_": 1}
+        s = Schafkopf(options_dict=options)
+        s.setup_game()
+        for _ in range(26):
+            s.step()
+        players     = s.players
+        aP          =  s.active_player
+        ownHand     = players[aP].hand
+        playerCards = subSamplev2(s.movesIdx, aP, ownHand)
+        for sampled,trueC in zip(playerCards, s.initialHandsIdx):
+            intersec = len(set(sampled).intersection(trueC))
+            perc     = round(intersec/8*100,1)
+            print(createCardsByIdx(trueC), "-->", sortCards(createCardsByIdx(sampled)), intersec, "-->", str(perc)+"%")
+        assert playerCards       == [[2, 20, 12, 7, 13, 31, 5, 26], [6, 18, 14, 25, 21, 27, 22, 4], [3, 16, 8, 10, 28, 23, 17, 24], [0, 29, 9, 1, 19, 30, 15, 11]]
 
-    # def test_EvaluateTable(self):
-    #     table = createTable(["S8", "SX", "S9", "EX"])
-    #     hightestCard, playerWithHighestCard, points = evaluateTable(table, "RAMSCH", table[0])
-    #     assert hightestCard.idx == 27 # SX
-    #     assert playerWithHighestCard == 1
-    #     assert points == 20
-    #     hightestCard, playerWithHighestCard, points = evaluateTable(table, "RAMSCH", table[3])
-    #     assert hightestCard.idx == 3 # EX
-    #     assert playerWithHighestCard == 3
-    #     assert points == 20
+    def test_EvaluateTable(self):
+        table = createTable(["S8", "SX", "S9", "EX"])
+        hightestCard, playerWithHighestCard, points = evaluateTable(table, "RAMSCH", table[0])
+        assert hightestCard.idx == 27 # SX
+        assert playerWithHighestCard == 1
+        assert points == 20
+        hightestCard, playerWithHighestCard, points = evaluateTable(table, "RAMSCH", table[3])
+        assert hightestCard.idx == 3 # EX
+        assert playerWithHighestCard == 3
+        assert points == 20
 
     @unittest.skip("This Test requires user(keyboard) inputs -> skip it!")
     def test_HUMANKEYBOARD(self):

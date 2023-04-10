@@ -34,7 +34,7 @@ class MonteCarloTree:
     results = {}
     self.root.best_child(ucb_const=self.ucb_const)
     for child in self.root.children:
-        results[child.previous_action] = child.visits # child.visits is better than child.value!!! 
+        results[child.previous_action] = child.visits# alternatively: child.visits, child.get_average_reward(player=child.parent.gActive_Player)
     return results  
 
   def selection(self):
